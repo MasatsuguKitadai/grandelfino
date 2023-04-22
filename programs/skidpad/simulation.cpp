@@ -15,10 +15,10 @@ FILE *fp;
 mode_t dir_mode = S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IWGRP | S_IXGRP | S_IROTH | S_IXOTH | S_IXOTH;
 
 /** パラメータ **/
-const float r = 8.0;  // 旋回半径 [m]
-const float v = 40.0; // 走行速度 [km/h]
-const float hz = 10;  // サンプリング周期 [Hz]
-const float n = 4.0;  // 周回数 [-]
+const float r = 7.625; // 旋回半径 [m]
+const float v = 40.0;  // 走行速度 [km/h]
+const float hz = 10;   // サンプリング周期 [Hz]
+const float n = 4.0;   // 周回数 [-]
 
 /** パラメータ（自動的に決まる） **/
 const float v2 = v * 1000.0 / 3600.0;                                  // 走行速度 [m/s]
@@ -27,7 +27,7 @@ const float pi = 4 * atan(1.0);                                        // 円周
 const float t_start = 2.0;                                             // 助走の時間 [s]
 const float mileage_sp = 2.0 * pi * r * n;                             // スキッドパッドの走行距離 [m]
 const float t_sp = mileage_sp / v2;                                    // スキッドパッドの走行時間 [s]
-const float t_finish = 2.0;                                            // 惰走時間 [s]
+const float t_finish = 1.0;                                            // 惰走時間 [s]
 const float acc_start = v2 / t_start;                                  // 助走の加速度 [m/s2]
 const float mileage_start = 1.0 / 2.0 * acc_start * t_start * t_start; // 助走距離 [m]
 
@@ -71,7 +71,7 @@ int main()
     printf("t3 = %.3f\n", t3);
 
     /** 助走区間 (t0 <= t < t1) **/
-    for (int i = t0 * hz; i < t1 * hz; i++)
+    for (int i = int(t0 * hz); i < int(t1 * hz); i++)
     {
         const float t = i / hz;
         xw[i] = 0;
@@ -79,7 +79,7 @@ int main()
     }
 
     /** スキッドパッド走行区間 (t1 <= t < t2) **/
-    for (int i = t1 * hz; i < t2 * hz; i++)
+    for (int i = int(t1 * hz); i < int(t2 * hz); i++)
     {
         const float t = i / hz;
         xw[i] = Skidpad_x(t);
@@ -88,7 +88,7 @@ int main()
     }
 
     /** 惰走区間 (t2 <= t < t3) **/
-    for (int i = t2 * hz; i < t3 * hz; i++)
+    for (int i = int(t2 * hz); i < int(t3 * hz); i++)
     {
         const float t = i / hz;
         xw[i] = 0;
@@ -97,7 +97,7 @@ int main()
     }
 
     /** データの書き出し **/
-    for (int i = t0 * hz; i < t3 * hz; i++)
+    for (int i = int(t0 * hz); i < int(t3 * hz); i++)
     {
         const float t = i / hz;
         Write_data(i);
@@ -206,8 +206,8 @@ void Gnuplot(int n)
     const float t = n / hz;
     const float x_max = 20.0;
     const float x_min = -20.0;
-    const float y_max = 10.0;
-    const float y_min = -10.0;
+    const float y_max = 15.0;
+    const float y_min = -15.0;
 
     /** Gnuplot ファイル名の設定 **/
     char graphname[100], filename_1[100], filename_2[100];
@@ -223,7 +223,7 @@ void Gnuplot(int n)
     }
 
     /** Gnuplot 描画設定 **/
-    fprintf(gp, "set terminal png size 800, 500 font 'Times New Roman, 16'\n");
+    fprintf(gp, "set terminal png size 800, 600 font 'Times New Roman, 16'\n");
     fprintf(gp, "set size ratio -1\n");
     fprintf(gp, "set output '%s'\n", graphname);                        // 出力ファイル
     fprintf(gp, "unset key\n");                                         // 凡例非表示
