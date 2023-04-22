@@ -1,4 +1,6 @@
 # 画像ファイルの削除
+rm -r data_1/
+rm -r data_2/
 rm -r graph/
 
 # シミュレーションの実行
