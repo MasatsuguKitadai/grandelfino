@@ -17,7 +17,7 @@ mode_t dir_mode = S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IWGRP | S_IXGRP | S_
 /** パラメータ **/
 const float r = 7.625; // 旋回半径 [m]
 const float v = 40.0;  // 走行速度 [km/h]
-const float hz = 10;   // サンプリング周期 [Hz]
+const float hz = 100;  // サンプリング周期 [Hz]
 const float n = 4.0;   // 周回数 [-]
 
 /** パラメータ（自動的に決まる） **/
@@ -38,16 +38,22 @@ const float t2 = t1 + t_sp;     // スキッドパッド終了時刻 [s]
 const float t3 = t2 + t_finish; // 走行終了時刻 [s]
 
 /** グローバル変数 **/
-vector<float> xw(t3 *hz); // 絶対座標系 (x,y) : World coordinate system
-vector<float> yw(t3 *hz); // 絶対座標系 (x,y) : World coordinate system
-vector<float> xl(t3 *hz); // 車両座標系 (u,v) : Local coordinate system
-vector<float> yl(t3 *hz); // 車両座標系 (u,v) : Local coordinate system
+vector<float> xw(t3 *hz); // 絶対座標系 x軸方向 : World coordinate system
+vector<float> yw(t3 *hz); // 絶対座標系 y軸方向 : World coordinate system
+vector<float> xl(t3 *hz); // 車両座標系 x軸方向 : Local coordinate system
+vector<float> yl(t3 *hz); // 車両座標系 y軸方向 : Local coordinate system
+
+vector<float> acc_xl(t3 *hz);    // 車両に加わる加速度 x軸方向
+vector<float> acc_yl(t3 *hz);    // 車両に加わる加速度 y軸方向
+vector<float> acc_omega(t3 *hz); // 車両に加わる角加速度 z軸方向
 
 /** プロトタイプ宣言 **/
-float Skidpad_x(float t);
-float Skidpad_y(float t);
 float Start(float t);
 float Finish(float t);
+float Skidpad_x(float t);
+float Skidpad_y(float t);
+float Skidpad_y_acc(float t);
+float Skidpad_omega_acc(float t);
 void Write_data(int n);
 void Gnuplot(int n);
 
@@ -58,41 +64,65 @@ void Gnuplot(int n);
 int main()
 {
     /** ディレクトリの作成 **/
-    const char dir_1[] = "data_1";
-    const char dir_2[] = "data_2";
-    const char dir_3[] = "graph";
+    const char dir_0[] = "simulation";
+    const char dir_1[] = "simulation/position";
+    const char dir_2[] = "simulation/route";
+    const char dir_3[] = "simulation/acceleration";
+    const char dir_4[] = "simulation/graph";
+
+    mkdir(dir_0, dir_mode);
     mkdir(dir_1, dir_mode);
     mkdir(dir_2, dir_mode);
     mkdir(dir_3, dir_mode);
-
-    printf("t0 = %.3f\n", t0);
-    printf("t1 = %.3f\n", t1);
-    printf("t2 = %.3f\n", t2);
-    printf("t3 = %.3f\n", t3);
+    mkdir(dir_4, dir_mode);
 
     /** 助走区間 (t0 <= t < t1) **/
     for (int i = int(t0 * hz); i < int(t1 * hz); i++)
     {
+        // 時刻の計算
         const float t = i / hz;
+
+        // 車両位置
         xw[i] = 0;
         yw[i] = Start(t);
+
+        // 加速度
+        acc_xl[i] = -1.0 * acc_start;
+        acc_yl[i] = 0;
+        acc_omega[i] = 0;
     }
 
     /** スキッドパッド走行区間 (t1 <= t < t2) **/
     for (int i = int(t1 * hz); i < int(t2 * hz); i++)
     {
+        // 時刻の計算
         const float t = i / hz;
+
+        // 車両位置
         xw[i] = Skidpad_x(t);
         yw[i] = Skidpad_y(t);
+
+        // 加速度
+        acc_xl[i] = 0;
+        acc_yl[i] = Skidpad_y_acc(t);
+        acc_omega[i] = Skidpad_omega_acc(t);
         // printf("time = %.3f\tx = %.3f\ty = %.3f\n", t, xw[i], yw[i]);
     }
 
     /** 惰走区間 (t2 <= t < t3) **/
     for (int i = int(t2 * hz); i < int(t3 * hz); i++)
     {
+        // 時刻の計算
         const float t = i / hz;
+
+        // 車両位置
         xw[i] = 0;
         yw[i] = Finish(t);
+
+        // 加速度
+        acc_xl[i] = 0;
+        acc_yl[i] = 0;
+        acc_omega[i] = 0;
         // printf("%.3f\t[s]\tx = %.3f\ty = %.3f\n", t, xw[i], yw[i]);
     }
 
@@ -101,9 +131,22 @@ int main()
     {
         const float t = i / hz;
         Write_data(i);
-        Gnuplot(i);
+        if (i % 10 == 0)
+        {
+            Gnuplot(i);
+        }
         printf("%.3f\t[s]\tx = %.3f\ty = %.3f\n", t, xw[i], yw[i]);
     }
+
+    /** 加速度の書き出し **/
+    char filename[] = "simulation/acceleration/data.dat";
+    fp = fopen(filename, "w");
+    for (int i = int(t0 * hz); i < int(t3 * hz); i++)
+    {
+        float t_tmp = i / hz;
+        fprintf(fp, "%f\t%f\t%f\t%f\t%f\t%f\t%f\n", t_tmp, acc_xl[i], acc_yl[i], 0.0, 0.0, 0.0, acc_omega[i]);
+    }
+    fclose(fp);
 
     return 0;
 }
@@ -169,23 +212,71 @@ float Finish(float t)
 }
 
 /**************************************************************/
+// Function name : Skidpad_y_acc
+// Description   : スキッドパッド区間のy方向加速度の計算
+/**************************************************************/
+float Skidpad_y_acc(float t)
+{
+    /** 角移動量の計算 **/
+    float theta = omega * (t - t1); // 角移動量 [rad]
+    float acc_y;                    // 角速度 [rad/s]
+
+    if (0 <= theta && theta <= 2.0 * pi * 2.0)
+    {
+        acc_y = -1.0 * r * omega * omega;
+    }
+    else if (2.0 * pi * 2.0 <= theta)
+    {
+        acc_y = r * omega * omega;
+    }
+
+    return acc_y;
+}
+
+/**************************************************************/
+// Function name : Skidpad_omega_acc
+// Description   : スキッドパッド区間の角加速度の計算
+/**************************************************************/
+float Skidpad_omega_acc(float t)
+{
+    /** 角移動量の計算 **/
+    float theta = omega * (t - t1); // 角移動量 [rad]
+    float acc_omega;                // 角速度 [rad/s]
+
+    if (t == t1)
+    {
+        acc_omega = -2.0 * pi * n / t_sp;
+    }
+    else if (t == t1 * t_sp / 2.0)
+    {
+        acc_omega = 2.0 * pi * n / t_sp;
+    }
+    else
+    {
+        acc_omega = 0;
+    }
+
+    return acc_omega;
+}
+
+/**************************************************************/
 // Function name : Write_data
 // Description   : 車両の位置を計算
 /**************************************************************/
 void Write_data(int n)
 {
     const float t = n / hz;
-    char filename_1[100], filename_2[100];
-    sprintf(filename_1, "data_1/%d.dat", n);
-    sprintf(filename_2, "data_2/%d.dat", n);
 
     /** 走行位置の書き出し **/
-    fp = fopen(filename_1, "w");
+    char filename[100];
+    sprintf(filename, "simulation/position/%d.dat", n);
+    fp = fopen(filename, "w");
     fprintf(fp, "%f\t%f\t%f\n", t, xw[n], yw[n]);
     fclose(fp);
 
     /** 走行経路の書き出し **/
-    fp = fopen(filename_2, "w");
+    sprintf(filename, "simulation/route/%d.dat", n);
+    fp = fopen(filename, "w");
     for (int i = 0; i <= n; i++)
     {
         float t_tmp = i / hz;
@@ -211,9 +302,9 @@ void Gnuplot(int n)
 
     /** Gnuplot ファイル名の設定 **/
     char graphname[100], filename_1[100], filename_2[100];
-    sprintf(filename_1, "data_1/%d.dat", n);
-    sprintf(filename_2, "data_2/%d.dat", n);
-    sprintf(graphname, "graph/%04d.png", n);
+    sprintf(filename_1, "simulation/position/%d.dat", n);
+    sprintf(filename_2, "simulation/route/%d.dat", n);
+    sprintf(graphname, "simulation/graph/%04d.png", n);
 
     /** Gnuplot 呼び出し **/
     if ((gp = popen("gnuplot", "w")) == NULL)
