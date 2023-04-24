@@ -9,23 +9,30 @@
 #include <stdlib.h>
 #include <math.h>
 #include <sys/stat.h>
+#include <time.h>
 #include <vector>
 #include "../hpp/functions.hpp"
 using namespace std;
 FILE *fp;
 mode_t dir_mode = S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IWGRP | S_IXGRP | S_IROTH | S_IXOTH | S_IXOTH;
 
+/** 物理法則 **/
+const float pi = 4 * atan(1.0); // 円周率 [rad]
+const float g = 9.80665;        // 重力加速度 [m/s2]
+
 /** パラメータ **/
-const float r = 7.625;        // 旋回半径 [m]
-const float v = 40.0;         // 走行速度 [km/h]
-const float hz_6axis = 100.0; // 6軸センサのサンプリング周期 [Hz]
-const float hz_gps = 5.0;     // GPSのサンプリング周期 [Hz] (ZED-F9P は RTK 時に最大 20 [Hz])
-const float n = 4.0;          // スキッドパッドの周回数 [-] (右周り2周 → 左回り2周)
+const float v = 40.0;                     // 走行速度 [km/h]
+const float r = 7.625;                    // 旋回半径 [m]
+const float n = 4.0;                      // スキッドパッドの周回数 [-] (右周り2周 → 左回り2周)
+const float hz_6axis = 100.0;             // 6軸センサのサンプリング周期 [Hz]
+const float hz_gps = 2.0;                 // GPSのサンプリング周期 [Hz] (ZED-F9P は RTK 時に最大 20 [Hz])
+const float err_g = 2.0 * g * 0.010;      // 加速度センサの誤差 [m/s2]
+const float err_omega = 2.0 * pi * 0.010; // 加速度センサの誤差 [m/s2]
+const float err_gps = 0.01;               // GPSの誤差 [m]
 
 /** パラメータ（自動的に決まる） **/
 const float v2 = v * 1000.0 / 3600.0;                                  // 走行速度 [m/s]
 const float omega = v2 / r;                                            // 角速度 [rad/s]
-const float pi = 4 * atan(1.0);                                        // 円周率 [rad]
 const float t_start = 2.0;                                             // 助走の時間 [s]
 const float mileage_sp = 2.0 * pi * r * n;                             // スキッドパッドの走行距離 [m]
 const float t_sp = mileage_sp / v2;                                    // スキッドパッドの走行時間 [s]
@@ -45,11 +52,18 @@ vector<float> yw(t3 *hz_6axis); // 絶対座標系 y軸方向 : World coordinate
 vector<float> xl(t3 *hz_6axis); // 車両座標系 x軸方向 : Local coordinate system
 vector<float> yl(t3 *hz_6axis); // 車両座標系 y軸方向 : Local coordinate system
 
-vector<float> acc_xl(t3 *hz_6axis);    // 車両に加わる加速度 x軸方向
-vector<float> acc_yl(t3 *hz_6axis);    // 車両に加わる加速度 y軸方向
-vector<float> omegal(t3 *hz_6axis);    // 車両に加わる角加速度 z軸方向
-vector<float> latitude(t3 *hz_6axis);  // 車両位置 緯度
-vector<float> longitude(t3 *hz_6axis); // 車両位置 経度
+vector<float> acc_xl(t3 *hz_6axis);    // 測定データ：車両に加わる加速度 x軸方向
+vector<float> acc_yl(t3 *hz_6axis);    // 測定データ：車両に加わる加速度 y軸方向
+vector<float> omegal(t3 *hz_6axis);    // 測定データ：車両に加わる角加速度 z軸方向
+vector<float> latitude(t3 *hz_6axis);  // 測定データ：車両位置 緯度
+vector<float> longitude(t3 *hz_6axis); // 測定データ：車両位置 経度
+
+vector<float> err_xl(t3 *hz_6axis);     // 乱数配列
+vector<float> err_yl(t3 *hz_6axis);     // 乱数配列
+vector<float> err_omegal(t3 *hz_6axis); // 乱数配列
+vector<float> err_lon(t3 *hz_6axis);    // 乱数配列
+vector<float> err_lat(t3 *hz_6axis);    // 乱数配列
+vector<float> err_buf(t3 *hz_6axis);    // 乱数配列
 
 /** プロトタイプ宣言 **/
 float Start(float t);
@@ -60,8 +74,11 @@ float Skidpad_y_acc(float t);
 float Skidpad_omega_acc(float t);
 float GPS_latitude(int n);
 float GPS_longitude(int n);
+void Random_number(vector<float> &err);
+void Box_Mullers_method(vector<float> &x1, vector<float> &x2);
 void Write_data(int n);
 void Gnuplot(int n);
+void Gnuplot_2();
 
 /**************************************************************/
 // Function name : main
@@ -82,6 +99,22 @@ int main()
     mkdir(dir_3, dir_mode);
     mkdir(dir_4, dir_mode);
 
+    /** 誤差データの生成 **/
+    srand((unsigned int)time(NULL)); // シード値の変更
+
+    // 一様乱数の生成
+    Random_number(err_xl);
+    Random_number(err_yl);
+    Random_number(err_omegal);
+    Random_number(err_lon);
+    Random_number(err_lat);
+    Random_number(err_buf);
+
+    // 正規分布乱数への変換
+    Box_Mullers_method(err_xl, err_yl);
+    Box_Mullers_method(err_omegal, err_lon);
+    Box_Mullers_method(err_lat, err_buf);
+
     /** 助走区間 (t0 <= t < t1) **/
     for (int i = int(t0 * hz_6axis); i < int(t1 * hz_6axis); i++)
     {
@@ -98,7 +131,7 @@ int main()
         omegal[i] = 0;
 
         // 経度・緯度
-        longitude[i] = GPS_longitude(i) = ;
+        longitude[i] = GPS_longitude(i);
         latitude[i] = GPS_latitude(i);
     }
 
@@ -142,7 +175,7 @@ int main()
         latitude[i] = GPS_latitude(i);
     }
 
-    /** データの書き出し **/
+    /** 真値の書き出し **/
     for (int i = int(t0 * hz_6axis); i < int(t3 * hz_6axis); i++)
     {
         const float t = i / hz_6axis;
@@ -153,15 +186,28 @@ int main()
         }
     }
 
+    /** 誤差の足し算 **/
+    for (int i = 0; i < acc_xl.size(); i++)
+    {
+        acc_xl[i] += err_g * err_xl[i];
+        acc_yl[i] += err_g * err_yl[i];
+        omegal[i] += err_omega * err_omegal[i];
+        longitude[i] += err_gps * err_lon[i];
+        latitude[i] += err_gps * err_lat[i];
+    }
+
     /** 加速度の書き出し **/
     char filename[] = "simulation/data/data.dat";
     fp = fopen(filename, "w");
-    for (int i = int(t0 * hz_6axis); i < int(t3 * hz_6axis); i++)
+    for (int i = 0; i < acc_xl.size(); i++)
     {
         float t_tmp = i / hz_6axis;
         fprintf(fp, "%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\n", t_tmp, acc_xl[i], acc_yl[i], 0.0, 0.0, 0.0, omegal[i], longitude[i], latitude[i]);
     }
     fclose(fp);
+
+    /** 模擬計測データの描画 **/
+    Gnuplot_2();
 
     return 0;
 }
@@ -323,17 +369,35 @@ float GPS_latitude(int n)
 }
 
 /**************************************************************/
-// Function name : Gaussian
-// Description   : スキッドパッド区間の角加速度の計算
-// IN  ：x：調べる値，mu：平均値，sigma：分散の二乗根
-// OUT ：X：確率変数
+// Function name : Random_number
+// Description   : 一様乱数の生成
 /**************************************************************/
-float Gaussian(float x, float mu, float sigma)
+void Random_number(vector<float> &err)
 {
-    // ガウス分布に従った値を返す
-    float X = exp(-1 * (x - mu) * (x - mu) / (2 * sigma * sigma));
+    for (int i = 0; i < err.size(); i++)
+    {
+        err[i] = (float)rand() / RAND_MAX;
+    }
+}
 
-    return X;
+/**************************************************************/
+// Function name : Box_Mullers_method
+// Description   : 正規分布の乱数を与える (x1,x2は互いに独立な一様乱数)
+/**************************************************************/
+void Box_Mullers_method(vector<float> &x1, vector<float> &x2)
+{
+    const float pi = 4 * atan(1.0); // 円周率 [rad]
+    for (int i = 0; i < x1.size(); i++)
+    {
+        // ボックス=ミュラー法による正規分布乱数の計算
+        float tmp = sqrt(-2.0 * log(x1[i]));
+        float value1 = tmp * cos(2.0 * pi * x2[i]);
+        float value2 = tmp * sin(2.0 * pi * x2[i]);
+
+        // 配列への代入
+        x1[i] = value1; // -1.0 <= x1 <= 1.0
+        x2[i] = value2; // -1.0 <= x2 <= 1.0
+    }
 }
 
 /**************************************************************/
@@ -405,6 +469,53 @@ void Gnuplot(int n)
 
     /** Gnuplot 書き出し **/
     fprintf(gp, "plot '%s' using 2:3 with lines lc 'grey50' notitle, '%s' using 2:3 with points lc 'royalblue' ps 3 pt 7 notitle\n", filename_2, filename_1);
+
+    /** Gnuplot 終了 **/
+    fflush(gp);            // Clean up Data
+    fprintf(gp, "exit\n"); // Quit gnuplot
+    pclose(gp);
+}
+
+/**************************************************************/
+// Function name : Gnuplot_2
+// Description  :
+/**************************************************************/
+void Gnuplot_2()
+{
+    FILE *gp;
+
+    /** Gnuplot 初期設定 **/
+    const int x_max = t3;
+    const int x_min = 0;
+    const float y_max = 2.0;
+    const float y_min = -2.0;
+
+    /** Gnuplot ファイル名の設定 **/
+    const char filename[] = "simulation/data/data.dat";
+    const char graphname[] = "simulation/data/data.png";
+
+    /** Gnuplot 呼び出し **/
+    if ((gp = popen("gnuplot", "w")) == NULL)
+    {
+        printf("gnuplot is not here!\n");
+        exit(0); // gnuplotが無い場合、異常ある場合は終了
+    }
+
+    /** Gnuplot 描画設定 **/
+    fprintf(gp, "set terminal png size 800, 600 font 'Times New Roman, 16'\n");
+    fprintf(gp, "set size ratio 0.5\n");
+    fprintf(gp, "set output '%s'\n", graphname);                                 // 出力ファイル
+    fprintf(gp, "unset key\n");                                                  // 凡例非表示
+    fprintf(gp, "set xrange [%d:%d]\n", x_min, x_max);                           // x軸の描画範囲
+    fprintf(gp, "set yrange [%.3f:%.3f]\n", y_min, y_max);                       // y軸の描画範囲
+    fprintf(gp, "set title 'Skidpad Simulation : Acc Y-direction'\n");           // グラフタイトル
+    fprintf(gp, "set xlabel '{/Times-Italic t} [s]' offset 0.0, 0.0\n");         // x軸のラベル
+    fprintf(gp, "set ylabel '{/Times-Italic Acc y} [m/s^2]' offset 1.0, 0.0\n"); // y軸のラベル
+    fprintf(gp, "set xtics 5.0 offset 0.0, 0.0\n");                              // x軸の間隔
+    fprintf(gp, "set ytics 5.0 offset 0.0, 0.0\n");                              // y軸の間隔
+
+    /** Gnuplot 書き出し **/
+    fprintf(gp, "plot '%s' using 1:7 with lines lc 'black' notitle\n", filename);
 
     /** Gnuplot 終了 **/
     fflush(gp);            // Clean up Data

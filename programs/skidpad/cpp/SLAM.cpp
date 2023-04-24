@@ -16,13 +16,10 @@ mode_t dir_mode = S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IWGRP | S_IXGRP | S_
 
 /** パラメータ **/
 const float hz_6axis = 100; // サンプリング周期 [Hz]
-const float error = -100.0; // GPSの情報がないときの値 [-]
 
 /** 変数宣言 **/
-vector<float> x;         // x方向位置 [m]
-vector<float> y;         // y方向位置 [m]
-vector<float> longitude; // 経度情報 [m]
-vector<float> latitude;  // 緯度情報 [m]
+vector<float> x; // x方向位置 [m]
+vector<float> y; // y方向位置 [m]
 
 /** プロトタイプ宣言 **/
 int SLAM();
@@ -36,10 +33,10 @@ void Gnuplot(int n);
 int main()
 {
     /** ディレクトリの作成 **/
-    const char dir_0[] = "SLAM_ver2";
-    const char dir_1[] = "SLAM_ver2/position";
-    const char dir_2[] = "SLAM_ver2/route";
-    const char dir_3[] = "SLAM_ver2/graph";
+    const char dir_0[] = "SLAM";
+    const char dir_1[] = "SLAM/position";
+    const char dir_2[] = "SLAM/route";
+    const char dir_3[] = "SLAM/graph";
 
     mkdir(dir_0, dir_mode);
     mkdir(dir_1, dir_mode);
@@ -51,6 +48,7 @@ int main()
     for (int i = 0; i < data_length; i++)
     {
         Write_data(i);
+
         if (i % 10 == 0)
         {
             Gnuplot(i);
@@ -67,13 +65,15 @@ int main()
 int SLAM()
 {
     /** 変数設定 **/
-    vector<float> t;       // 時刻 [s]
-    vector<float> acc_x;   // x方向加速度 [m/s2]
-    vector<float> acc_y;   // y方向加速度 [m/s2]
-    vector<float> acc_z;   // z方向加速度 [m/s2]
-    vector<float> omega_x; // roll方向角加速度 [rad/s2]
-    vector<float> omega_y; // pitch方向角加速度 [rad/s2]
-    vector<float> omega_z; // yaw方向角加速度 [rad/s2]
+    vector<float> t;         // 時刻 [s]
+    vector<float> acc_x;     // x方向加速度 [m/s2]
+    vector<float> acc_y;     // y方向加速度 [m/s2]
+    vector<float> acc_z;     // z方向加速度 [m/s2]
+    vector<float> omega_x;   // roll方向角加速度 [rad/s2]
+    vector<float> omega_y;   // pitch方向角加速度 [rad/s2]
+    vector<float> omega_z;   // yaw方向角加速度 [rad/s2]
+    vector<float> longitude; // 経度情報 [m]
+    vector<float> latitude;  // 緯度情報 [m]
 
     float tmp[8];    // 一時保存用バッファ [-]
     int data_length; // データの長さ [-]
@@ -110,19 +110,9 @@ int SLAM()
 
     for (int i = 0; i < data_length; i++)
     {
-        /** GPS情報による校正 **/
-        if (longitude[i] != error)
-        {
-            x_tmp = longitude[i];
-        }
-
-        if (latitude[i] != error)
-        {
-            y_tmp = latitude[i];
-        }
-
         /** 速度・角度の積算 **/
         theta += omega_z[i] * dt;
+
         u += -1.0 * (acc_x[i] * sin(theta) + acc_y[i] * cos(theta)) * dt; // 絶対座標系のx方向速度 [m/s]
         v += -1.0 * (acc_x[i] * cos(theta) + acc_y[i] * sin(theta)) * dt; // 絶対座標系のy方向速度 [m/s]
 
@@ -147,18 +137,18 @@ void Write_data(int n)
 
     /** 走行位置の書き出し **/
     char filename[100];
-    sprintf(filename, "SLAM_ver2/position/%d.dat", n);
+    sprintf(filename, "SLAM/position/%d.dat", n);
     fp = fopen(filename, "w");
     fprintf(fp, "%f\t%f\t%f\n", t, x[n], y[n]);
     fclose(fp);
 
     /** 走行経路の書き出し **/
-    sprintf(filename, "SLAM_ver2/route/%d.dat", n);
+    sprintf(filename, "SLAM/route/%d.dat", n);
     fp = fopen(filename, "w");
     for (int i = 0; i <= n; i++)
     {
         float t_tmp = i / hz_6axis;
-        fprintf(fp, "%f\t%f\t%f\t%lf\t%lf\n", t_tmp, x[i], y[i], longitude[i], latitude[i]);
+        fprintf(fp, "%f\t%f\t%f\n", t_tmp, x[i], y[i]);
     }
     fclose(fp);
 }
@@ -180,9 +170,9 @@ void Gnuplot(int n)
 
     /** Gnuplot ファイル名の設定 **/
     char graphname[100], filename_1[100], filename_2[100];
-    sprintf(filename_1, "SLAM_ver2/position/%d.dat", n);
-    sprintf(filename_2, "SLAM_ver2/route/%d.dat", n);
-    sprintf(graphname, "SLAM_ver2/graph/%04d.png", n);
+    sprintf(filename_1, "SLAM/position/%d.dat", n);
+    sprintf(filename_2, "SLAM/route/%d.dat", n);
+    sprintf(graphname, "SLAM/graph/%04d.png", n);
 
     /** Gnuplot 呼び出し **/
     if ((gp = popen("gnuplot", "w")) == NULL)
@@ -194,18 +184,18 @@ void Gnuplot(int n)
     /** Gnuplot 描画設定 **/
     fprintf(gp, "set terminal png size 800, 600 font 'Times New Roman, 16'\n");
     fprintf(gp, "set size ratio -1\n");
-    fprintf(gp, "set output '%s'\n", graphname);                                // 出力ファイル
-    fprintf(gp, "unset key\n");                                                 // 凡例非表示
-    fprintf(gp, "set xrange [%.3f:%.3f]\n", x_min, x_max);                      // x軸の描画範囲
-    fprintf(gp, "set yrange [%.3f:%.3f]\n", y_min, y_max);                      // y軸の描画範囲
-    fprintf(gp, "set title 'SLAM + GPS : {/Times-Italic t} = %1.3f [s]'\n", t); // グラフタイトル
-    fprintf(gp, "set xlabel '{/Times-Italic x} [m]' offset 0.0, 0.0\n");        // x軸のラベル
-    fprintf(gp, "set ylabel '{/Times-Italic y} [m]' offset 1.0, 0.0\n");        // y軸のラベル
-    fprintf(gp, "set xtics 5.0 offset 0.0, 0.0\n");                             // x軸の間隔
-    fprintf(gp, "set ytics 5.0 offset 0.0, 0.0\n");                             // y軸の間隔
+    fprintf(gp, "set output '%s'\n", graphname);                          // 出力ファイル
+    fprintf(gp, "unset key\n");                                           // 凡例非表示
+    fprintf(gp, "set xrange [%.3f:%.3f]\n", x_min, x_max);                // x軸の描画範囲
+    fprintf(gp, "set yrange [%.3f:%.3f]\n", y_min, y_max);                // y軸の描画範囲
+    fprintf(gp, "set title 'SLAM : {/Times-Italic t} = %1.3f [s]'\n", t); // グラフタイトル
+    fprintf(gp, "set xlabel '{/Times-Italic x} [m]' offset 0.0, 0.0\n");  // x軸のラベル
+    fprintf(gp, "set ylabel '{/Times-Italic y} [m]' offset 1.0, 0.0\n");  // y軸のラベル
+    fprintf(gp, "set xtics 5.0 offset 0.0, 0.0\n");                       // x軸の間隔
+    fprintf(gp, "set ytics 5.0 offset 0.0, 0.0\n");                       // y軸の間隔
 
     /** Gnuplot 書き出し **/
-    fprintf(gp, "plot '%s' using 2:3 with lines lc 'grey50' notitle, '%s' using 4:5 with points lc 'grey' ps 1 pt 7 notitle, '%s' using 2:3 with points lc 'red' ps 3 pt 7 notitle\n", filename_2, filename_2, filename_1);
+    fprintf(gp, "plot '%s' using 2:3 with lines lc 'grey50' notitle, '%s' using 2:3 with points lc 'red' ps 3 pt 7 notitle\n", filename_2, filename_1);
 
     /** Gnuplot 終了 **/
     fflush(gp);            // Clean up Data

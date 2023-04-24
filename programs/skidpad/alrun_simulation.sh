@@ -6,4 +6,4 @@ g++ cpp/simulation.cpp -o "out/simulation.out"
 ./out/simulation.out
 
 # gifアニメーションの作成
-python3 py/gif.py
+python3 py/gif_simulation.py

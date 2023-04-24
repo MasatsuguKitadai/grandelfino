@@ -23,6 +23,7 @@ vector<float> y; // y方向位置 [m]
 
 /** プロトタイプ宣言 **/
 int SLAM();
+void Moving_Average(vector<float> &data);
 void Write_data(int num);
 void Gnuplot(int n);
 
@@ -33,10 +34,10 @@ void Gnuplot(int n);
 int main()
 {
     /** ディレクトリの作成 **/
-    const char dir_0[] = "SLAM_ver1";
-    const char dir_1[] = "SLAM_ver1/position";
-    const char dir_2[] = "SLAM_ver1/route";
-    const char dir_3[] = "SLAM_ver1/graph";
+    const char dir_0[] = "SLAM+MA";
+    const char dir_1[] = "SLAM+MA/position";
+    const char dir_2[] = "SLAM+MA/route";
+    const char dir_3[] = "SLAM+MA/graph";
 
     mkdir(dir_0, dir_mode);
     mkdir(dir_1, dir_mode);
@@ -99,6 +100,11 @@ int SLAM()
     x.resize(data_length);
     y.resize(data_length);
 
+    /** 移動平均の適用 **/
+    Moving_Average(acc_x);
+    Moving_Average(acc_y);
+    // Moving_Average(omega_z);
+
     /** 位置の積算 **/
     const float dt = 1.0 / hz_6axis; // サンプリング間隔 [s]
     float u = 0;                     // x方向車両速度 [m/s]
@@ -127,6 +133,29 @@ int SLAM()
 }
 
 /**************************************************************/
+// Function name : Moving_Average
+// Description   : 移動平均値を計算
+/**************************************************************/
+void Moving_Average(vector<float> &data)
+{
+    const int n = 5.0;              // 移動平均で使用するデータ数
+    vector<float> ave(data.size()); // 移動平均値用の配列
+
+    /** 移動平均の計算 **/
+    for (int i = n / 2.0; i < data.size() - n / 2.0; i++)
+        for (int j = i - n / 2.0; j <= i + n / 2.0; j++)
+        {
+            ave[i] += data[j]; // 合計値の計算
+        }
+
+    /** 算出値の代入 **/
+    for (int i = n / 2.0; i < data.size() - n / 2.0; i++)
+    {
+        data[i] = float(ave[i] / n);
+    }
+}
+
+/**************************************************************/
 // Function name : Write_data
 // Description   : 車両の位置を計算
 /**************************************************************/
@@ -136,13 +165,13 @@ void Write_data(int n)
 
     /** 走行位置の書き出し **/
     char filename[100];
-    sprintf(filename, "SLAM_ver1/position/%d.dat", n);
+    sprintf(filename, "SLAM+MA/position/%d.dat", n);
     fp = fopen(filename, "w");
     fprintf(fp, "%f\t%f\t%f\n", t, x[n], y[n]);
     fclose(fp);
 
     /** 走行経路の書き出し **/
-    sprintf(filename, "SLAM_ver1/route/%d.dat", n);
+    sprintf(filename, "SLAM+MA/route/%d.dat", n);
     fp = fopen(filename, "w");
     for (int i = 0; i <= n; i++)
     {
@@ -169,9 +198,9 @@ void Gnuplot(int n)
 
     /** Gnuplot ファイル名の設定 **/
     char graphname[100], filename_1[100], filename_2[100];
-    sprintf(filename_1, "SLAM_ver1/position/%d.dat", n);
-    sprintf(filename_2, "SLAM_ver1/route/%d.dat", n);
-    sprintf(graphname, "SLAM_ver1/graph/%04d.png", n);
+    sprintf(filename_1, "SLAM+MA/position/%d.dat", n);
+    sprintf(filename_2, "SLAM+MA/route/%d.dat", n);
+    sprintf(graphname, "SLAM+MA/graph/%04d.png", n);
 
     /** Gnuplot 呼び出し **/
     if ((gp = popen("gnuplot", "w")) == NULL)
@@ -183,15 +212,15 @@ void Gnuplot(int n)
     /** Gnuplot 描画設定 **/
     fprintf(gp, "set terminal png size 800, 600 font 'Times New Roman, 16'\n");
     fprintf(gp, "set size ratio -1\n");
-    fprintf(gp, "set output '%s'\n", graphname);                          // 出力ファイル
-    fprintf(gp, "unset key\n");                                           // 凡例非表示
-    fprintf(gp, "set xrange [%.3f:%.3f]\n", x_min, x_max);                // x軸の描画範囲
-    fprintf(gp, "set yrange [%.3f:%.3f]\n", y_min, y_max);                // y軸の描画範囲
-    fprintf(gp, "set title 'SLAM : {/Times-Italic t} = %1.3f [s]'\n", t); // グラフタイトル
-    fprintf(gp, "set xlabel '{/Times-Italic x} [m]' offset 0.0, 0.0\n");  // x軸のラベル
-    fprintf(gp, "set ylabel '{/Times-Italic y} [m]' offset 1.0, 0.0\n");  // y軸のラベル
-    fprintf(gp, "set xtics 5.0 offset 0.0, 0.0\n");                       // x軸の間隔
-    fprintf(gp, "set ytics 5.0 offset 0.0, 0.0\n");                       // y軸の間隔
+    fprintf(gp, "set output '%s'\n", graphname);                               // 出力ファイル
+    fprintf(gp, "unset key\n");                                                // 凡例非表示
+    fprintf(gp, "set xrange [%.3f:%.3f]\n", x_min, x_max);                     // x軸の描画範囲
+    fprintf(gp, "set yrange [%.3f:%.3f]\n", y_min, y_max);                     // y軸の描画範囲
+    fprintf(gp, "set title 'SLAM + MA : {/Times-Italic t} = %1.3f [s]'\n", t); // グラフタイトル
+    fprintf(gp, "set xlabel '{/Times-Italic x} [m]' offset 0.0, 0.0\n");       // x軸のラベル
+    fprintf(gp, "set ylabel '{/Times-Italic y} [m]' offset 1.0, 0.0\n");       // y軸のラベル
+    fprintf(gp, "set xtics 5.0 offset 0.0, 0.0\n");                            // x軸の間隔
+    fprintf(gp, "set ytics 5.0 offset 0.0, 0.0\n");                            // y軸の間隔
 
     /** Gnuplot 書き出し **/
     fprintf(gp, "plot '%s' using 2:3 with lines lc 'grey50' notitle, '%s' using 2:3 with points lc 'red' ps 3 pt 7 notitle\n", filename_2, filename_1);
