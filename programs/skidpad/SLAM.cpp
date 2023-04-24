@@ -64,18 +64,18 @@ int main()
 int SLAM()
 {
     /** 変数設定 **/
-    vector<float> t;         // 時刻 [s]
-    vector<float> acc_x;     // x方向加速度 [m/s2]
-    vector<float> acc_y;     // y方向加速度 [m/s2]
-    vector<float> acc_z;     // z方向加速度 [m/s2]
-    vector<float> acc_roll;  // roll方向角加速度 [rad/s2]
-    vector<float> acc_pitch; // pitch方向角加速度 [rad/s2]
-    vector<float> acc_yaw;   // yaw方向角加速度 [rad/s2]
-    float tmp[6];            // 一時保存用バッファ [-]
-    int data_length;         // データの長さ [-]
+    vector<float> t;       // 時刻 [s]
+    vector<float> acc_x;   // x方向加速度 [m/s2]
+    vector<float> acc_y;   // y方向加速度 [m/s2]
+    vector<float> acc_z;   // z方向加速度 [m/s2]
+    vector<float> omega_x; // roll方向角加速度 [rad/s2]
+    vector<float> omega_y; // pitch方向角加速度 [rad/s2]
+    vector<float> omega_z; // yaw方向角加速度 [rad/s2]
+    float tmp[6];          // 一時保存用バッファ [-]
+    int data_length;       // データの長さ [-]
 
     /** ファイルの読み込み **/
-    char filename[] = "simulation/acceleration/data.dat";
+    char filename[] = "simulation/data/data.dat";
     fp = fopen(filename, "r");
     while ((fscanf(fp, "%f\t%f\t%f\t%f\t%f\t%f\t%f", &tmp[0], &tmp[1], &tmp[2], &tmp[3], &tmp[4], &tmp[5], &tmp[6])) != EOF)
     {
@@ -83,9 +83,9 @@ int SLAM()
         acc_x.push_back(tmp[1]);
         acc_y.push_back(tmp[2]);
         acc_z.push_back(tmp[3]);
-        acc_roll.push_back(tmp[4]);
-        acc_pitch.push_back(tmp[5]);
-        acc_yaw.push_back(tmp[6]);
+        omega_x.push_back(tmp[4]);
+        omega_y.push_back(tmp[5]);
+        omega_z.push_back(tmp[6]);
         data_length += 1;
     }
     fclose(fp);
@@ -95,28 +95,24 @@ int SLAM()
     y.resize(data_length);
 
     /** 位置の積算 **/
-    const float delta_t = 1.0 / hz; // サンプリング間隔 [s]
-    float u = 0;                    // x方向車両速度 [m/s]
-    float v = 0;                    // y方向車両速度 [m/s]
-    float omega = 0;                // 角速度 [m/s]
-    float theta = 0;                // 車両の角度 [rad]
+    const float dt = 1.0 / hz; // サンプリング間隔 [s]
+    float u = 0;               // x方向車両速度 [m/s]
+    float v = 0;               // y方向車両速度 [m/s]
+    float theta = 0;           // 車両の角度 [rad]
     float x_tmp = 0;
     float y_tmp = 0;
 
     for (int i = 0; i < data_length; i++)
     {
         /** 速度・角度の積算 **/
-        omega += -1.0 * acc_yaw[i] * delta_t;
-        theta += omega * delta_t;
+        theta += omega_z[i] * dt;
 
-        u += -1.0 * (acc_x[i] * sin(theta) + acc_y[i] * cos(theta)) * delta_t; // 絶対座標系のx方向速度 [m/s]
-        v += -1.0 * (acc_x[i] * cos(theta) + acc_y[i] * sin(theta)) * delta_t; // 絶対座標系のy方向速度 [m/s]
-
-        printf("t = %.3f\tacc_yaw = %.3f\n", i / hz, omega);
+        u += -1.0 * (acc_x[i] * sin(theta) + acc_y[i] * cos(theta)) * dt; // 絶対座標系のx方向速度 [m/s]
+        v += -1.0 * (acc_x[i] * cos(theta) + acc_y[i] * sin(theta)) * dt; // 絶対座標系のy方向速度 [m/s]
 
         /** 速度・角度の積算 **/
-        x[i] = x_tmp + u * delta_t;
-        y[i] = y_tmp + v * delta_t;
+        x[i] = x_tmp + u * dt;
+        y[i] = y_tmp + v * dt;
 
         x_tmp = x[i];
         y_tmp = y[i];
@@ -163,8 +159,8 @@ void Gnuplot(int n)
     const float t = n / hz;
     const float x_max = 20.0;
     const float x_min = -20.0;
-    const float y_max = 30.0;
-    const float y_min = 0.0;
+    const float y_max = 25.0;
+    const float y_min = -5.0;
 
     /** Gnuplot ファイル名の設定 **/
     char graphname[100], filename_1[100], filename_2[100];

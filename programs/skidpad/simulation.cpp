@@ -43,9 +43,9 @@ vector<float> yw(t3 *hz); // 絶対座標系 y軸方向 : World coordinate syste
 vector<float> xl(t3 *hz); // 車両座標系 x軸方向 : Local coordinate system
 vector<float> yl(t3 *hz); // 車両座標系 y軸方向 : Local coordinate system
 
-vector<float> acc_xl(t3 *hz);    // 車両に加わる加速度 x軸方向
-vector<float> acc_yl(t3 *hz);    // 車両に加わる加速度 y軸方向
-vector<float> acc_omega(t3 *hz); // 車両に加わる角加速度 z軸方向
+vector<float> acc_xl(t3 *hz); // 車両に加わる加速度 x軸方向
+vector<float> acc_yl(t3 *hz); // 車両に加わる加速度 y軸方向
+vector<float> omegal(t3 *hz); // 車両に加わる角加速度 z軸方向
 
 /** プロトタイプ宣言 **/
 float Start(float t);
@@ -67,7 +67,7 @@ int main()
     const char dir_0[] = "simulation";
     const char dir_1[] = "simulation/position";
     const char dir_2[] = "simulation/route";
-    const char dir_3[] = "simulation/acceleration";
+    const char dir_3[] = "simulation/data";
     const char dir_4[] = "simulation/graph";
 
     mkdir(dir_0, dir_mode);
@@ -89,7 +89,7 @@ int main()
         // 加速度
         acc_xl[i] = -1.0 * acc_start;
         acc_yl[i] = 0;
-        acc_omega[i] = 0;
+        omegal[i] = 0;
     }
 
     /** スキッドパッド走行区間 (t1 <= t < t2) **/
@@ -105,7 +105,7 @@ int main()
         // 加速度
         acc_xl[i] = 0;
         acc_yl[i] = Skidpad_y_acc(t);
-        acc_omega[i] = Skidpad_omega_acc(t);
+        omegal[i] = Skidpad_omega_acc(t);
         // printf("time = %.3f\tx = %.3f\ty = %.3f\n", t, xw[i], yw[i]);
     }
 
@@ -122,7 +122,7 @@ int main()
         // 加速度
         acc_xl[i] = 0;
         acc_yl[i] = 0;
-        acc_omega[i] = 0;
+        omegal[i] = 0;
         // printf("%.3f\t[s]\tx = %.3f\ty = %.3f\n", t, xw[i], yw[i]);
     }
 
@@ -135,16 +135,15 @@ int main()
         {
             Gnuplot(i);
         }
-        printf("%.3f\t[s]\tx = %.3f\ty = %.3f\n", t, xw[i], yw[i]);
     }
 
     /** 加速度の書き出し **/
-    char filename[] = "simulation/acceleration/data.dat";
+    char filename[] = "simulation/data/data.dat";
     fp = fopen(filename, "w");
     for (int i = int(t0 * hz); i < int(t3 * hz); i++)
     {
         float t_tmp = i / hz;
-        fprintf(fp, "%f\t%f\t%f\t%f\t%f\t%f\t%f\n", t_tmp, acc_xl[i], acc_yl[i], 0.0, 0.0, 0.0, acc_omega[i]);
+        fprintf(fp, "%f\t%f\t%f\t%f\t%f\t%f\t%f\n", t_tmp, acc_xl[i], acc_yl[i], 0.0, 0.0, 0.0, omegal[i]);
     }
     fclose(fp);
 
@@ -158,7 +157,7 @@ int main()
 float Start(float t)
 {
     /** 走行位置の計算 **/
-    float y = 1.0 / 2.0 * acc_start * t * t - mileage_start;
+    float y = 1.0 / 2.0 * acc_start * t * t;
     return y;
 }
 
@@ -195,7 +194,7 @@ float Skidpad_y(float t)
     float theta = omega * (t - t1);
 
     /** y方向位置の積算 **/
-    float y = r * sin(theta);
+    float y = r * sin(theta) + mileage_start;
 
     return y;
 }
@@ -207,7 +206,7 @@ float Skidpad_y(float t)
 float Finish(float t)
 {
     /** 走行位置の計算 **/
-    float y = v2 * (t - t2);
+    float y = v2 * (t - t2) + mileage_start;
     return y;
 }
 
@@ -229,6 +228,10 @@ float Skidpad_y_acc(float t)
     {
         acc_y = r * omega * omega;
     }
+    else
+    {
+        acc_y = 0;
+    }
 
     return acc_y;
 }
@@ -241,22 +244,22 @@ float Skidpad_omega_acc(float t)
 {
     /** 角移動量の計算 **/
     float theta = omega * (t - t1); // 角移動量 [rad]
-    float acc_omega;                // 角速度 [rad/s]
+    float omegal;                   // 角速度 [rad/s]
 
-    if (t == t1)
+    if (0 <= theta && theta <= 2.0 * pi * 2.0)
     {
-        acc_omega = -2.0 * pi * n / t_sp;
+        omegal = -1.0 * omega;
     }
-    else if (t == t1 * t_sp / 2.0)
+    else if (2.0 * pi * 2.0 <= theta)
     {
-        acc_omega = 2.0 * pi * n / t_sp;
+        omegal = omega;
     }
     else
     {
-        acc_omega = 0;
+        omegal = 0;
     }
 
-    return acc_omega;
+    return omegal;
 }
 
 /**************************************************************/
@@ -297,8 +300,8 @@ void Gnuplot(int n)
     const float t = n / hz;
     const float x_max = 20.0;
     const float x_min = -20.0;
-    const float y_max = 15.0;
-    const float y_min = -15.0;
+    const float y_max = 25.0;
+    const float y_min = -5.0;
 
     /** Gnuplot ファイル名の設定 **/
     char graphname[100], filename_1[100], filename_2[100];
