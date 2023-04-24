@@ -10,15 +10,17 @@
 #include <math.h>
 #include <sys/stat.h>
 #include <vector>
+#include "../hpp/functions.hpp"
 using namespace std;
 FILE *fp;
 mode_t dir_mode = S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IWGRP | S_IXGRP | S_IROTH | S_IXOTH | S_IXOTH;
 
 /** パラメータ **/
-const float r = 7.625; // 旋回半径 [m]
-const float v = 40.0;  // 走行速度 [km/h]
-const float hz = 100;  // サンプリング周期 [Hz]
-const float n = 4.0;   // 周回数 [-]
+const float r = 7.625;        // 旋回半径 [m]
+const float v = 40.0;         // 走行速度 [km/h]
+const float hz_6axis = 100.0; // 6軸センサのサンプリング周期 [Hz]
+const float hz_gps = 5.0;     // GPSのサンプリング周期 [Hz] (ZED-F9P は RTK 時に最大 20 [Hz])
+const float n = 4.0;          // スキッドパッドの周回数 [-] (右周り2周 → 左回り2周)
 
 /** パラメータ（自動的に決まる） **/
 const float v2 = v * 1000.0 / 3600.0;                                  // 走行速度 [m/s]
@@ -38,14 +40,16 @@ const float t2 = t1 + t_sp;     // スキッドパッド終了時刻 [s]
 const float t3 = t2 + t_finish; // 走行終了時刻 [s]
 
 /** グローバル変数 **/
-vector<float> xw(t3 *hz); // 絶対座標系 x軸方向 : World coordinate system
-vector<float> yw(t3 *hz); // 絶対座標系 y軸方向 : World coordinate system
-vector<float> xl(t3 *hz); // 車両座標系 x軸方向 : Local coordinate system
-vector<float> yl(t3 *hz); // 車両座標系 y軸方向 : Local coordinate system
+vector<float> xw(t3 *hz_6axis); // 絶対座標系 x軸方向 : World coordinate system
+vector<float> yw(t3 *hz_6axis); // 絶対座標系 y軸方向 : World coordinate system
+vector<float> xl(t3 *hz_6axis); // 車両座標系 x軸方向 : Local coordinate system
+vector<float> yl(t3 *hz_6axis); // 車両座標系 y軸方向 : Local coordinate system
 
-vector<float> acc_xl(t3 *hz); // 車両に加わる加速度 x軸方向
-vector<float> acc_yl(t3 *hz); // 車両に加わる加速度 y軸方向
-vector<float> omegal(t3 *hz); // 車両に加わる角加速度 z軸方向
+vector<float> acc_xl(t3 *hz_6axis);    // 車両に加わる加速度 x軸方向
+vector<float> acc_yl(t3 *hz_6axis);    // 車両に加わる加速度 y軸方向
+vector<float> omegal(t3 *hz_6axis);    // 車両に加わる角加速度 z軸方向
+vector<float> latitude(t3 *hz_6axis);  // 車両位置 緯度
+vector<float> longitude(t3 *hz_6axis); // 車両位置 経度
 
 /** プロトタイプ宣言 **/
 float Start(float t);
@@ -54,6 +58,8 @@ float Skidpad_x(float t);
 float Skidpad_y(float t);
 float Skidpad_y_acc(float t);
 float Skidpad_omega_acc(float t);
+float GPS_latitude(int n);
+float GPS_longitude(int n);
 void Write_data(int n);
 void Gnuplot(int n);
 
@@ -77,10 +83,10 @@ int main()
     mkdir(dir_4, dir_mode);
 
     /** 助走区間 (t0 <= t < t1) **/
-    for (int i = int(t0 * hz); i < int(t1 * hz); i++)
+    for (int i = int(t0 * hz_6axis); i < int(t1 * hz_6axis); i++)
     {
         // 時刻の計算
-        const float t = i / hz;
+        const float t = i / hz_6axis;
 
         // 車両位置
         xw[i] = 0;
@@ -90,13 +96,17 @@ int main()
         acc_xl[i] = -1.0 * acc_start;
         acc_yl[i] = 0;
         omegal[i] = 0;
+
+        // 経度・緯度
+        longitude[i] = GPS_longitude(i) = ;
+        latitude[i] = GPS_latitude(i);
     }
 
     /** スキッドパッド走行区間 (t1 <= t < t2) **/
-    for (int i = int(t1 * hz); i < int(t2 * hz); i++)
+    for (int i = int(t1 * hz_6axis); i < int(t2 * hz_6axis); i++)
     {
         // 時刻の計算
-        const float t = i / hz;
+        const float t = i / hz_6axis;
 
         // 車両位置
         xw[i] = Skidpad_x(t);
@@ -106,14 +116,17 @@ int main()
         acc_xl[i] = 0;
         acc_yl[i] = Skidpad_y_acc(t);
         omegal[i] = Skidpad_omega_acc(t);
-        // printf("time = %.3f\tx = %.3f\ty = %.3f\n", t, xw[i], yw[i]);
+
+        // 経度・緯度
+        longitude[i] = GPS_longitude(i);
+        latitude[i] = GPS_latitude(i);
     }
 
     /** 惰走区間 (t2 <= t < t3) **/
-    for (int i = int(t2 * hz); i < int(t3 * hz); i++)
+    for (int i = int(t2 * hz_6axis); i < int(t3 * hz_6axis); i++)
     {
         // 時刻の計算
-        const float t = i / hz;
+        const float t = i / hz_6axis;
 
         // 車両位置
         xw[i] = 0;
@@ -123,13 +136,16 @@ int main()
         acc_xl[i] = 0;
         acc_yl[i] = 0;
         omegal[i] = 0;
-        // printf("%.3f\t[s]\tx = %.3f\ty = %.3f\n", t, xw[i], yw[i]);
+
+        // 経度・緯度
+        longitude[i] = GPS_longitude(i);
+        latitude[i] = GPS_latitude(i);
     }
 
     /** データの書き出し **/
-    for (int i = int(t0 * hz); i < int(t3 * hz); i++)
+    for (int i = int(t0 * hz_6axis); i < int(t3 * hz_6axis); i++)
     {
-        const float t = i / hz;
+        const float t = i / hz_6axis;
         Write_data(i);
         if (i % 10 == 0)
         {
@@ -140,10 +156,10 @@ int main()
     /** 加速度の書き出し **/
     char filename[] = "simulation/data/data.dat";
     fp = fopen(filename, "w");
-    for (int i = int(t0 * hz); i < int(t3 * hz); i++)
+    for (int i = int(t0 * hz_6axis); i < int(t3 * hz_6axis); i++)
     {
-        float t_tmp = i / hz;
-        fprintf(fp, "%f\t%f\t%f\t%f\t%f\t%f\t%f\n", t_tmp, acc_xl[i], acc_yl[i], 0.0, 0.0, 0.0, omegal[i]);
+        float t_tmp = i / hz_6axis;
+        fprintf(fp, "%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\n", t_tmp, acc_xl[i], acc_yl[i], 0.0, 0.0, 0.0, omegal[i], longitude[i], latitude[i]);
     }
     fclose(fp);
 
@@ -263,12 +279,70 @@ float Skidpad_omega_acc(float t)
 }
 
 /**************************************************************/
+// Function name : GPS_longitude
+// Description   : スキッドパッド区間の角加速度の計算
+/**************************************************************/
+float GPS_longitude(int n)
+{
+    /** 緯度情報の取得 **/
+    const int interval = hz_6axis / hz_gps;
+    float longitude;
+
+    if (n % interval == 0)
+    {
+        longitude = xw[n];
+    }
+    else
+    {
+        longitude = -100;
+    }
+
+    return longitude;
+}
+
+/**************************************************************/
+// Function name : GPS_latitude
+// Description   : スキッドパッド区間の角加速度の計算
+/**************************************************************/
+float GPS_latitude(int n)
+{
+    /** 経度情報の取得 **/
+    const int interval = hz_6axis / hz_gps;
+    float latitude;
+
+    if (n % interval == 0)
+    {
+        latitude = yw[n];
+    }
+    else
+    {
+        latitude = -100;
+    }
+
+    return latitude;
+}
+
+/**************************************************************/
+// Function name : Gaussian
+// Description   : スキッドパッド区間の角加速度の計算
+// IN  ：x：調べる値，mu：平均値，sigma：分散の二乗根
+// OUT ：X：確率変数
+/**************************************************************/
+float Gaussian(float x, float mu, float sigma)
+{
+    // ガウス分布に従った値を返す
+    float X = exp(-1 * (x - mu) * (x - mu) / (2 * sigma * sigma));
+
+    return X;
+}
+
+/**************************************************************/
 // Function name : Write_data
 // Description   : 車両の位置を計算
 /**************************************************************/
 void Write_data(int n)
 {
-    const float t = n / hz;
+    const float t = n / hz_6axis;
 
     /** 走行位置の書き出し **/
     char filename[100];
@@ -282,8 +356,8 @@ void Write_data(int n)
     fp = fopen(filename, "w");
     for (int i = 0; i <= n; i++)
     {
-        float t_tmp = i / hz;
-        fprintf(fp, "%f\t%f\t%f\n", t_tmp, xw[i], yw[i]);
+        float t_tmp = i / hz_6axis;
+        fprintf(fp, "%f\t%f\t%f\t%f\t%f\n", t_tmp, xw[i], yw[i], longitude[i], latitude[i]);
     }
     fclose(fp);
 }
@@ -297,7 +371,7 @@ void Gnuplot(int n)
     FILE *gp;
 
     /** Gnuplot 初期設定 **/
-    const float t = n / hz;
+    const float t = n / hz_6axis;
     const float x_max = 20.0;
     const float x_min = -20.0;
     const float y_max = 25.0;
@@ -319,15 +393,15 @@ void Gnuplot(int n)
     /** Gnuplot 描画設定 **/
     fprintf(gp, "set terminal png size 800, 600 font 'Times New Roman, 16'\n");
     fprintf(gp, "set size ratio -1\n");
-    fprintf(gp, "set output '%s'\n", graphname);                        // 出力ファイル
-    fprintf(gp, "unset key\n");                                         // 凡例非表示
-    fprintf(gp, "set xrange [%.3f:%.3f]\n", x_min, x_max);              // x軸の描画範囲
-    fprintf(gp, "set yrange [%.3f:%.3f]\n", y_min, y_max);              // y軸の描画範囲
-    fprintf(gp, "set title 'Skidpad Simulation : t = %1.3f [s]'\n", t); // グラフタイトル
-    fprintf(gp, "set xlabel 'x [m]' offset 0.0, 0.0\n");                // x軸のラベル
-    fprintf(gp, "set ylabel 'y [m]' offset 1.0, 0.0\n");                // y軸のラベル
-    fprintf(gp, "set xtics 5.0 offset 0.0, 0.0\n");                     // x軸の間隔
-    fprintf(gp, "set ytics 5.0 offset 0.0, 0.0\n");                     // y軸の間隔
+    fprintf(gp, "set output '%s'\n", graphname);                                        // 出力ファイル
+    fprintf(gp, "unset key\n");                                                         // 凡例非表示
+    fprintf(gp, "set xrange [%.3f:%.3f]\n", x_min, x_max);                              // x軸の描画範囲
+    fprintf(gp, "set yrange [%.3f:%.3f]\n", y_min, y_max);                              // y軸の描画範囲
+    fprintf(gp, "set title 'Skidpad Simulation : {/Times-Italic t} = %1.3f [s]'\n", t); // グラフタイトル
+    fprintf(gp, "set xlabel '{/Times-Italic x} [m]' offset 0.0, 0.0\n");                // x軸のラベル
+    fprintf(gp, "set ylabel '{/Times-Italic y} [m]' offset 1.0, 0.0\n");                // y軸のラベル
+    fprintf(gp, "set xtics 5.0 offset 0.0, 0.0\n");                                     // x軸の間隔
+    fprintf(gp, "set ytics 5.0 offset 0.0, 0.0\n");                                     // y軸の間隔
 
     /** Gnuplot 書き出し **/
     fprintf(gp, "plot '%s' using 2:3 with lines lc 'grey50' notitle, '%s' using 2:3 with points lc 'royalblue' ps 3 pt 7 notitle\n", filename_2, filename_1);

@@ -1,9 +1,9 @@
 # 画像ファイルの削除
-rm -r simulation
+rm -r simulation/
 
 # シミュレーションの実行
-g++ simulation.cpp -o "simulation.out"
-./simulation.out
+g++ cpp/simulation.cpp -o "out/simulation.out"
+./out/simulation.out
 
 # gifアニメーションの作成
-python3 gif.py
+python3 py/gif.py

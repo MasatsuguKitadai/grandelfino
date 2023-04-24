@@ -14,7 +14,13 @@ images[0].save('gif/simulation.gif', save_all=True,
                append_images=images[1:], duration=10.00, loop=0)
 
 # GIF動画の作成 #
-files = sorted(glob.glob('SLAM/graph/*.png'))
+files = sorted(glob.glob('SLAM_ver1/graph/*.png'))
 images = list(map(lambda file: Image.open(file), files))
-images[0].save('gif/SLAM.gif', save_all=True,
+images[0].save('gif/SLAM_ver1.gif', save_all=True,
+               append_images=images[1:], duration=10.00, loop=0)
+
+# GIF動画の作成 #
+files = sorted(glob.glob('SLAM_ver2/graph/*.png'))
+images = list(map(lambda file: Image.open(file), files))
+images[0].save('gif/SLAM_ver2.gif', save_all=True,
                append_images=images[1:], duration=10.00, loop=0)
