@@ -1,7 +1,7 @@
 @charset "UTF-8";
 
 html {
-    font-size: 10px;
+    font-size: 1rem;
     max-width: 100%;
     min-height: 100%;
 }
@@ -39,5 +39,19 @@ li {
 
 .line {
     background-color: royalblue;
-    height: 3px;
+    height: 0.3rem;
+}
+
+.topic {
+    display: flex;
+    flex-direction: row;
+}
+
+.left {
+    width: 50%;
+}
+
+.gif {
+    margin: 0;
+    width: 100%;
 }

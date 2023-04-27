@@ -151,7 +151,7 @@ void Moving_Average(vector<float> &data)
     /** 算出値の代入 **/
     for (int i = n / 2.0; i < data.size() - n / 2.0; i++)
     {
-        data[i] = float(ave[i] / n);
+        data[i] = float(ave[i] / n + 1);
     }
 }
 
