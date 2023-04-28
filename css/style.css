@@ -2,8 +2,9 @@
 
 html {
     font-size: 1rem;
-    max-width: 100%;
+    max-width: 960px;
     min-height: 100%;
+    margin: auto;
 }
 
 body {
