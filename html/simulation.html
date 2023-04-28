@@ -20,9 +20,10 @@
             <img class="gif" src="../programs/skidpad/gif/simulation.gif" alt="simulation_gif">
         </div>
         <div class="right">
-            <h3>←スキッドパッドのシミュレーション</h3>
+            <h3>←スキッドパッドのシミュレーション（真値）</h3>
             <p>擬似的にスキッドパッドの走行を再現</p>
             <p>　速度　：40 km/h</p>
+            <p>回転半径：7.625 m</p>
             <p>回転半径：7.625 m</p>
         </div>
     </div>
@@ -31,7 +32,8 @@
             <img class="gif" src="../programs/skidpad/gif/SLAM.gif" alt="SLAM_gif">
         </div>
         <div class="right">
-            <h3>←加速度センサ</h3>
+            <h3>←加速度センサデータの積算</h3>
+            <p>積算誤差が乗りすぎて，あてにならない</p>
         </div>
     </div>
     <div class="topic">
@@ -39,7 +41,9 @@
             <img class="gif" src="../programs/skidpad/gif/SLAM+GPS.gif" alt="SLAM+GPS_gif">
         </div>
         <div class="right">
-            <h3>←加速度センサ＋GPS</h3>
+            <h3>←加速度センサの積算＋GPS位置補正</h3>
+            <p>要するに加速度センサーに乗る積算誤差を<br>
+                GPSで補正すれば使えるデータになる</p>
         </div>
     </div>
 </body>
