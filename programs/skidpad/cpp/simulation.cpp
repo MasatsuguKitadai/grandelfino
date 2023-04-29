@@ -515,7 +515,7 @@ void Gnuplot_2()
     fprintf(gp, "set ytics 5.0 offset 0.0, 0.0\n");                              // y軸の間隔
 
     /** Gnuplot 書き出し **/
-    fprintf(gp, "plot '%s' using 1:7 with lines lc 'black' notitle\n", filename);
+    fprintf(gp, "plot '%s' using 1: with lines lc 'black' notitle\n", filename);
 
     /** Gnuplot 終了 **/
     fflush(gp);            // Clean up Data

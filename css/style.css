@@ -51,6 +51,19 @@ li {
     margin: 0;
 }
 
+table {
+    margin: 20px 0 0 20px;
+    margin-left: 20px;
+    border-collapse: collapse;
+}
+
+td {
+    font-weight: normal;
+    font-size: 1rem;
+    padding: 4px;
+    border: 1px solid;
+}
+
 .topic {
     display: flex;
     flex-direction: row;

@@ -1,5 +1,7 @@
 # push しないディレクトリの設定
-programs/skidpad/simulation
+programs/skidpad/simulation/graph
+programs/skidpad/simulation/route
+programs/skidpad/simulation/position
 programs/skidpad/SLAM
 programs/skidpad/SLAM+MA
 programs/skidpad/SLAM+GPS
