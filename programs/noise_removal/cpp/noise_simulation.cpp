@@ -20,10 +20,11 @@ const float pi = 4 * atan(1.0); // 円周率 [rad]
 const float g = 9.80665;        // 重力加速度 [m/s2]
 
 /** 各種パラメータ **/
-const float t = 1.0;     // 計測時刻 [s]
-const int hz = 1000;     // サンプリング周波数 [Hz]
-const int hz_sin = 2.0;  // 正弦波の周期 [Hz]
-const float power = 5.0; // 正弦波の大きさ [-]
+const float t = 1.0;          // 計測時刻 [s]
+const int hz = 1000;          // サンプリング周波数 [Hz]
+const int hz_sin = 2.0;       // 正弦波の周期 [Hz]
+const float wave_value = 1.0; // 正弦波の大きさ [-]
+const float err_value = 0.2;  // エラーの大きさ [-]
 
 /** グローバル変数 **/
 vector<float> data(t *hz);  // 基本データ
@@ -71,7 +72,7 @@ int main()
     /** 誤差データの足し合わせ **/
     for (int i = 0; i < data.size(); i++)
     {
-        data[i] += err_1[i];
+        data[i] += err_1[i] * err_value;
     }
 
     /** データの書き出し(2) **/
@@ -100,7 +101,7 @@ void Sin_wave(vector<float> &data)
         float dt = 1.0 / hz;             // 時間間隔 [s]
         float omega = 2.0 * pi * hz_sin; // 角速度 [rad/s]
         float theta = omega * dt * i;    // 角度 [rad]
-        data[i] = power * sin(theta);
+        data[i] = wave_value * sin(theta);
     }
 }
 
@@ -165,8 +166,8 @@ void Gnuplot_noise(const char filename[], const char graphname[], const char tit
     /** Gnuplot 初期設定 **/
     const int x_max = t;
     const int x_min = 0;
-    const float y_max = 10.0;
-    const float y_min = -10.0;
+    const float y_max = 1.5;
+    const float y_min = -1.5;
 
     /** Gnuplot 呼び出し **/
     if ((gp = popen("gnuplot", "w")) == NULL)
@@ -186,7 +187,7 @@ void Gnuplot_noise(const char filename[], const char graphname[], const char tit
     fprintf(gp, "set xlabel '{/Times-Italic t} [s]' offset 0.0, 0.0\n");    // x軸のラベル
     fprintf(gp, "set ylabel '{/Times-Italic F(t)} [-]' offset 1.0, 0.0\n"); // y軸のラベル
     fprintf(gp, "set xtics 0.1 offset 0.0, 0.0\n");                         // x軸の間隔
-    fprintf(gp, "set ytics 5.0 offset 0.0, 0.0\n");                         // y軸の間隔
+    fprintf(gp, "set ytics 0.5 offset 0.0, 0.0\n");                         // y軸の間隔
 
     /** Gnuplot 書き出し **/
     fprintf(gp, "plot '%s' using 1:2 with lines lc 'black' notitle\n", filename);
