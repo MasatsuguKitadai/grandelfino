@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>Grattan web</title>
+    <link rel="stylesheet" type="text/css" href="../css/style.css" />
+    <script type="text/javascript"
+        asyncsrc="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=MML_SVG"></script>
+</head>
+
+<body>
+    <header>
+        <h1><a href="home.html">Grattan WEB Site</a> |</h1>
+        <h1 class="sub_title">Skidpad Simulation</h1>
+    </header>
+
+    <h2>シミュレーションを使ったGPSと加速度センサによる自己位置推定精度の話</h2>
+    <div class="topic">
+        <div class="left">
+            <img class="gif" src="../programs/skidpad_simulation/gif/simulation.gif" alt="simulation_gif">
+        </div>
+        <div class="right">
+            <h3>スキッドパッドのシミュレーション（真値）</h3>
+            <p>数値シミュレーションでスキッドパッドの走行を再現</p>
+            <table>
+                <tr>
+                    <td>走行速度</td>
+                    <td>40 </td>
+                    <td>[km/h]</td>
+                </tr>
+                <tr>
+                    <td>回転半径</td>
+                    <td>7.625</td>
+                    <td>[m]</td>
+                </tr>
+                <tr>
+                    <td>GPS周波数</td>
+                    <td>2.0</td>
+                    <td>[Hz]</td>
+                </tr>
+                <tr>
+                    <td>加速度センサ周波数</td>
+                    <td>100.0</td>
+                    <td>[Hz]</td>
+                </tr>
+            </table>
+        </div>
+    </div>
+    <div class="topic">
+        <div class="left">
+            <img class="gif" src="../programs/skidpad_simulation/gif/SLAM.gif" alt="SLAM_gif">
+        </div>
+        <div class="right">
+            <h3>加速度データの積算</h3>
+            <p>積算誤差が乗りすぎて，あてにならない</p>
+        </div>
+    </div>
+    </div>
+    <div class="topic">
+        <div class="left">
+            <img class="gif" src="../programs/skidpad_simulation/gif/SLAM+GPS.gif" alt="SLAM+GPS_gif">
+        </div>
+        <div class="right">
+            <h3>加速度データの積算 + GPS位置補正</h3>
+            <p>要するに加速度センサーに乗る積算誤差を<br>
+                GPSで補正すれば使えるデータになる</p>
+        </div>
+    </div>
+</body>
+
+</html>
