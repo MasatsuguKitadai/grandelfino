@@ -24,6 +24,7 @@ header {
 }
 
 .sub_title {
+    margin: 0;
     color: grey;
     width: auto;
     padding-left: 0.5rem;
