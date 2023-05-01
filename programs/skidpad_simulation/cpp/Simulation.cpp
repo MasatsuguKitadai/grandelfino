@@ -23,7 +23,7 @@ const float g = 9.80665;        // 重力加速度 [m/s2]
 const float v = 40.0;                     // 走行速度 [km/h]
 const float r = 7.625;                    // 旋回半径 [m]
 const float n = 4.0;                      // スキッドパッドの周回数 [-] (右周り2周 → 左回り2周)
-const float hz_imu = 100.0;             // 6軸センサのサンプリング周期 [Hz]
+const float hz_imu = 100.0;               // 6軸センサのサンプリング周期 [Hz]
 const float hz_gps = 2.0;                 // GPSのサンプリング周期 [Hz] (ZED-F9P は RTK 時に最大 20 [Hz])
 const float err_g = 2.0 * g * 0.010;      // 加速度センサの誤差 [m/s2]
 const float err_omega = 2.0 * pi * 0.010; // 加速度センサの誤差 [m/s2]
@@ -501,7 +501,7 @@ void Gnuplot_2()
     }
 
     /** Gnuplot 描画設定 **/
-    fprintf(gp, "set terminal png size 800, 600 font 'Times New Roman, 16'\n");
+    fprintf(gp, "set terminal png size 800, 600 font 'Times New Roman, 20'\n");
     fprintf(gp, "set size ratio 0.5\n");
     fprintf(gp, "set output '%s'\n", graphname);                                 // 出力ファイル
     fprintf(gp, "unset key\n");                                                  // 凡例非表示

@@ -192,17 +192,17 @@ void Gnuplot(int n)
     }
 
     /** Gnuplot 描画設定 **/
-    fprintf(gp, "set terminal png size 800, 600 font 'Times New Roman, 16'\n");
+    fprintf(gp, "set terminal png size 800, 600 font 'Times New Roman, 20'\n");
     fprintf(gp, "set size ratio -1\n");
-    fprintf(gp, "set output '%s'\n", graphname);                                              // 出力ファイル
-    fprintf(gp, "unset key\n");                                                               // 凡例非表示
-    fprintf(gp, "set xrange [%.3f:%.3f]\n", x_min, x_max);                                    // x軸の描画範囲
-    fprintf(gp, "set yrange [%.3f:%.3f]\n", y_min, y_max);                                    // y軸の描画範囲
-    fprintf(gp, "set title 'Estimated Position + GPS : {/Times-Italic t} = %1.3f [s]'\n", t); // グラフタイトル
-    fprintf(gp, "set xlabel '{/Times-Italic x} [m]' offset 0.0, 0.0\n");                      // x軸のラベル
-    fprintf(gp, "set ylabel '{/Times-Italic y} [m]' offset 1.0, 0.0\n");                      // y軸のラベル
-    fprintf(gp, "set xtics 5.0 offset 0.0, 0.0\n");                                           // x軸の間隔
-    fprintf(gp, "set ytics 5.0 offset 0.0, 0.0\n");                                           // y軸の間隔
+    fprintf(gp, "set output '%s'\n", graphname);                                                    // 出力ファイル
+    fprintf(gp, "unset key\n");                                                                     // 凡例非表示
+    fprintf(gp, "set xrange [%.3f:%.3f]\n", x_min, x_max);                                          // x軸の描画範囲
+    fprintf(gp, "set yrange [%.3f:%.3f]\n", y_min, y_max);                                          // y軸の描画範囲
+    fprintf(gp, "set title 'Estimated Position | IMU + GPS : {/Times-Italic t} = %1.3f [s]'\n", t); // グラフタイトル
+    fprintf(gp, "set xlabel '{/Times-Italic x} [m]' offset 0.0, 0.0\n");                            // x軸のラベル
+    fprintf(gp, "set ylabel '{/Times-Italic y} [m]' offset 1.0, 0.0\n");                            // y軸のラベル
+    fprintf(gp, "set xtics 5.0 offset 0.0, 0.0\n");                                                 // x軸の間隔
+    fprintf(gp, "set ytics 5.0 offset 0.0, 0.0\n");                                                 // y軸の間隔
 
     /** Gnuplot 書き出し **/
     fprintf(gp, "plot '%s' using 2:3 with lines lc 'grey50' notitle, '%s' using 4:5 with points lc 'grey' ps 1 pt 7 notitle, '%s' using 2:3 with points lc 'red' ps 3 pt 7 notitle\n", filename_2, filename_2, filename_1);

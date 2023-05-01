@@ -1,5 +1,5 @@
 # 画像ファイルの削除
-rm -r simulation/
+rm -r Simulation/
 
 # シミュレーションの実行
 g++ cpp/Simulation.cpp -o "out/Simulation.out"

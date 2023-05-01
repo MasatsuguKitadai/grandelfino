@@ -2,13 +2,17 @@
 
 html {
     font-size: 1rem;
-    max-width: 960px;
     min-height: 100%;
+    min-width: 100%;
     margin: auto;
+    background: linear-gradient(-225deg, #2CD8D5 0%, #C5C1FF 56%, #FFBAC3 100%);
 }
 
 body {
-    margin: 2% 5%;
+    max-width: 960px;
+    min-height: 100vh;
+    margin: auto;
+    background-color: white;
 }
 
 p {
@@ -19,9 +23,18 @@ p {
 header {
     display: flex;
     flex-direction: row;
-    margin: 0;
+    margin: 0 5%;
+    padding-top: 2%;
     border-bottom: solid 0.5rem royalblue;
     height: 3rem;
+}
+
+main {
+    margin: 2% 5% 0 5%;
+}
+
+footer {
+    height: 1rem;
 }
 
 .sub_title {
