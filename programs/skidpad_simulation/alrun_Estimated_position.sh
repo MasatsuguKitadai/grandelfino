@@ -1,6 +1,6 @@
 # 画像ファイルの削除
 rm -r Estimated_position_IMU/
-rm -r Estimated_position_GPS/
+# rm -r Estimated_position_GPS/
 rm -r Estimated_position_IMU+GPS/
 
 # Estimated_positionの実行

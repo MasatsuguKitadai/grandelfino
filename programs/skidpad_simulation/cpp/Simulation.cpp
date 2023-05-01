@@ -454,7 +454,7 @@ void Gnuplot(int n)
     }
 
     /** Gnuplot 描画設定 **/
-    fprintf(gp, "set terminal png size 800, 600 font 'Times New Roman, 16'\n");
+    fprintf(gp, "set terminal png size 800, 600 font 'Times New Roman, 20'\n");
     fprintf(gp, "set size ratio -1\n");
     fprintf(gp, "set output '%s'\n", graphname);                                        // 出力ファイル
     fprintf(gp, "unset key\n");                                                         // 凡例非表示

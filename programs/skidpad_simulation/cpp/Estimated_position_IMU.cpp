@@ -15,7 +15,7 @@ FILE *fp;
 mode_t dir_mode = S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IWGRP | S_IXGRP | S_IROTH | S_IXOTH | S_IXOTH;
 
 /** パラメータ **/
-const float hz_6axis = 100; // サンプリング周期 [Hz]
+const float hz_imu = 100; // サンプリング周期 [Hz]
 
 /** 変数宣言 **/
 vector<float> x; // x方向位置 [m]
@@ -44,6 +44,7 @@ int main()
     mkdir(dir_3, dir_mode);
 
     int data_length = Estimated_position();
+    printf("data = %d\n", data_length);
 
     for (int i = 0; i < data_length; i++)
     {
@@ -101,10 +102,10 @@ int Estimated_position()
     y.resize(data_length);
 
     /** 位置の積算 **/
-    const float dt = 1.0 / hz_6axis; // サンプリング間隔 [s]
-    float u = 0;                     // x方向車両速度 [m/s]
-    float v = 0;                     // y方向車両速度 [m/s]
-    float theta = 0;                 // 車両の角度 [rad]
+    const float dt = 1.0 / hz_imu; // サンプリング間隔 [s]
+    float u = 0;                   // x方向車両速度 [m/s]
+    float v = 0;                   // y方向車両速度 [m/s]
+    float theta = 0;               // 車両の角度 [rad]
     float x_tmp = 0;
     float y_tmp = 0;
 
@@ -133,7 +134,7 @@ int Estimated_position()
 /**************************************************************/
 void Write_data(int n)
 {
-    const float t = n / hz_6axis;
+    const float t = n / hz_imu;
 
     /** 走行位置の書き出し **/
     char filename[100];
@@ -147,7 +148,7 @@ void Write_data(int n)
     fp = fopen(filename, "w");
     for (int i = 0; i <= n; i++)
     {
-        float t_tmp = i / hz_6axis;
+        float t_tmp = i / hz_imu;
         fprintf(fp, "%f\t%f\t%f\n", t_tmp, x[i], y[i]);
     }
     fclose(fp);
@@ -162,7 +163,7 @@ void Gnuplot(int n)
     FILE *gp;
 
     /** Gnuplot 初期設定 **/
-    const float t = n / hz_6axis;
+    const float t = n / hz_imu;
     const float x_max = 20.0;
     const float x_min = -20.0;
     const float y_max = 25.0;
