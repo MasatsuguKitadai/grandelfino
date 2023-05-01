@@ -202,11 +202,9 @@ int main()
     {
         float t_tmp = i / hz_imu;
         fprintf(fp, "%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\n", t_tmp, acc_xl[i], acc_yl[i], 0.0, 0.0, 0.0, omegal[i], longitude[i], latitude[i]);
+        printf("%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\n", t_tmp, acc_xl[i], acc_yl[i], 0.0, 0.0, 0.0, omegal[i], longitude[i], latitude[i]);
     }
     fclose(fp);
-
-    /** 模擬計測データの描画 **/
-    Gnuplot_2();
 
     return 0;
 }
@@ -468,53 +466,6 @@ void Gnuplot(int n)
 
     /** Gnuplot 書き出し **/
     fprintf(gp, "plot '%s' using 2:3 with lines lc 'grey50' notitle, '%s' using 2:3 with points lc 'royalblue' ps 3 pt 7 notitle\n", filename_2, filename_1);
-
-    /** Gnuplot 終了 **/
-    fflush(gp);            // Clean up Data
-    fprintf(gp, "exit\n"); // Quit gnuplot
-    pclose(gp);
-}
-
-/**************************************************************/
-// Function name : Gnuplot_2
-// Description  :
-/**************************************************************/
-void Gnuplot_2()
-{
-    FILE *gp;
-
-    /** Gnuplot 初期設定 **/
-    const int x_max = t3;
-    const int x_min = 0;
-    const float y_max = 2.0;
-    const float y_min = -2.0;
-
-    /** Gnuplot ファイル名の設定 **/
-    const char filename[] = "Simulation/data/data.dat";
-    const char graphname[] = "Simulation/data/data.png";
-
-    /** Gnuplot 呼び出し **/
-    if ((gp = popen("gnuplot", "w")) == NULL)
-    {
-        printf("gnuplot is not here!\n");
-        exit(0); // gnuplotが無い場合、異常ある場合は終了
-    }
-
-    /** Gnuplot 描画設定 **/
-    fprintf(gp, "set terminal png size 800, 600 font 'Times New Roman, 20'\n");
-    fprintf(gp, "set size ratio 0.5\n");
-    fprintf(gp, "set output '%s'\n", graphname);                                 // 出力ファイル
-    fprintf(gp, "unset key\n");                                                  // 凡例非表示
-    fprintf(gp, "set xrange [%d:%d]\n", x_min, x_max);                           // x軸の描画範囲
-    fprintf(gp, "set yrange [%.3f:%.3f]\n", y_min, y_max);                       // y軸の描画範囲
-    fprintf(gp, "set title 'Skidpad Simulation : Acc Y-direction'\n");           // グラフタイトル
-    fprintf(gp, "set xlabel '{/Times-Italic t} [s]' offset 0.0, 0.0\n");         // x軸のラベル
-    fprintf(gp, "set ylabel '{/Times-Italic Acc y} [m/s^2]' offset 1.0, 0.0\n"); // y軸のラベル
-    fprintf(gp, "set xtics 5.0 offset 0.0, 0.0\n");                              // x軸の間隔
-    fprintf(gp, "set ytics 5.0 offset 0.0, 0.0\n");                              // y軸の間隔
-
-    /** Gnuplot 書き出し **/
-    fprintf(gp, "plot '%s' using 1: with lines lc 'black' notitle\n", filename);
 
     /** Gnuplot 終了 **/
     fflush(gp);            // Clean up Data

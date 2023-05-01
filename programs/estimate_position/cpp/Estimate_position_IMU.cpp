@@ -1,5 +1,5 @@
 /**************************************************************/
-// Program name : Estimated_position
+// Program name : Estimate_position
 // Author       : Masatsugu Kitadai
 // Date         : 2023/4/23
 // Description  :
@@ -22,9 +22,10 @@ vector<float> x; // x方向位置 [m]
 vector<float> y; // y方向位置 [m]
 
 /** プロトタイプ宣言 **/
-int Estimated_position();
+int Estimate_position();
 void Write_data(int num);
 void Gnuplot(int n);
+void RMSE();
 
 /**************************************************************/
 // Function name : main
@@ -33,17 +34,17 @@ void Gnuplot(int n);
 int main()
 {
     /** ディレクトリの作成 **/
-    const char dir_0[] = "Estimated_position_IMU";
-    const char dir_1[] = "Estimated_position_IMU/position";
-    const char dir_2[] = "Estimated_position_IMU/route";
-    const char dir_3[] = "Estimated_position_IMU/graph";
+    const char dir_0[] = "Estimate_position_IMU";
+    const char dir_1[] = "Estimate_position_IMU/position";
+    const char dir_2[] = "Estimate_position_IMU/route";
+    const char dir_3[] = "Estimate_position_IMU/graph";
 
     mkdir(dir_0, dir_mode);
     mkdir(dir_1, dir_mode);
     mkdir(dir_2, dir_mode);
     mkdir(dir_3, dir_mode);
 
-    int data_length = Estimated_position();
+    int data_length = Estimate_position();
     printf("data = %d\n", data_length);
 
     for (int i = 0; i < data_length; i++)
@@ -60,10 +61,10 @@ int main()
 }
 
 /**************************************************************/
-// Function name : Estimated_position
+// Function name : Estimate_position
 // Description   : 自己位置推定
 /**************************************************************/
-int Estimated_position()
+int Estimate_position()
 {
     /** 変数設定 **/
     vector<float> t;         // 時刻 [s]
@@ -138,13 +139,13 @@ void Write_data(int n)
 
     /** 走行位置の書き出し **/
     char filename[100];
-    sprintf(filename, "Estimated_position_IMU/position/%d.dat", n);
+    sprintf(filename, "Estimate_position_IMU/position/%d.dat", n);
     fp = fopen(filename, "w");
     fprintf(fp, "%f\t%f\t%f\n", t, x[n], y[n]);
     fclose(fp);
 
     /** 走行経路の書き出し **/
-    sprintf(filename, "Estimated_position_IMU/route/%d.dat", n);
+    sprintf(filename, "Estimate_position_IMU/route/%d.dat", n);
     fp = fopen(filename, "w");
     for (int i = 0; i <= n; i++)
     {
@@ -171,9 +172,9 @@ void Gnuplot(int n)
 
     /** Gnuplot ファイル名の設定 **/
     char graphname[100], filename_1[100], filename_2[100];
-    sprintf(filename_1, "Estimated_position_IMU/position/%d.dat", n);
-    sprintf(filename_2, "Estimated_position_IMU/route/%d.dat", n);
-    sprintf(graphname, "Estimated_position_IMU/graph/%04d.png", n);
+    sprintf(filename_1, "Estimate_position_IMU/position/%d.dat", n);
+    sprintf(filename_2, "Estimate_position_IMU/route/%d.dat", n);
+    sprintf(graphname, "Estimate_position_IMU/graph/%04d.png", n);
 
     /** Gnuplot 呼び出し **/
     if ((gp = popen("gnuplot", "w")) == NULL)

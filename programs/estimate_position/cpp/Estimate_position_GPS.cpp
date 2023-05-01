@@ -1,5 +1,5 @@
 /**************************************************************/
-// Program name : Estimated_position
+// Program name : Estimate_position
 // Author       : Masatsugu Kitadai
 // Date         : 2023/4/23
 // Description  :
@@ -15,14 +15,14 @@ FILE *fp;
 mode_t dir_mode = S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IWGRP | S_IXGRP | S_IROTH | S_IXOTH | S_IXOTH;
 
 /** パラメータ **/
-const float hz_6axis = 100; // サンプリング周期 [Hz]
+const float hz_gps = 2.0; // サンプリング周期 [Hz]
 
 /** 変数宣言 **/
 vector<float> x; // x方向位置 [m]
 vector<float> y; // y方向位置 [m]
 
 /** プロトタイプ宣言 **/
-int Estimated_position();
+int Estimate_position();
 void Moving_Average(vector<float> &data);
 void Write_data(int num);
 void Gnuplot(int n);
@@ -34,17 +34,17 @@ void Gnuplot(int n);
 int main()
 {
     /** ディレクトリの作成 **/
-    const char dir_0[] = "Estimated_position+MA";
-    const char dir_1[] = "Estimated_position+MA/position";
-    const char dir_2[] = "Estimated_position+MA/route";
-    const char dir_3[] = "Estimated_position+MA/graph";
+    const char dir_0[] = "Estimate_position_GPS";
+    const char dir_1[] = "Estimate_position_GPS/position";
+    const char dir_2[] = "Estimate_position_GPS/route";
+    const char dir_3[] = "Estimate_position_GPS/graph";
 
     mkdir(dir_0, dir_mode);
     mkdir(dir_1, dir_mode);
     mkdir(dir_2, dir_mode);
     mkdir(dir_3, dir_mode);
 
-    int data_length = Estimated_position();
+    int data_length = Estimate_position();
 
     for (int i = 0; i < data_length; i++)
     {
@@ -59,19 +59,13 @@ int main()
 }
 
 /**************************************************************/
-// Function name : Estimated_position
+// Function name : Estimate_position
 // Description   : 自己位置推定
 /**************************************************************/
-int Estimated_position()
+int Estimate_position()
 {
     /** 変数設定 **/
     vector<float> t;         // 時刻 [s]
-    vector<float> acc_x;     // x方向加速度 [m/s2]
-    vector<float> acc_y;     // y方向加速度 [m/s2]
-    vector<float> acc_z;     // z方向加速度 [m/s2]
-    vector<float> omega_x;   // roll方向角加速度 [rad/s2]
-    vector<float> omega_y;   // pitch方向角加速度 [rad/s2]
-    vector<float> omega_z;   // yaw方向角加速度 [rad/s2]
     vector<float> longitude; // 経度情報 [m]
     vector<float> latitude;  // 緯度情報 [m]
 
@@ -83,15 +77,13 @@ int Estimated_position()
     fp = fopen(filename, "r");
     while ((fscanf(fp, "%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f", &tmp[0], &tmp[1], &tmp[2], &tmp[3], &tmp[4], &tmp[5], &tmp[6], &tmp[7], &tmp[8])) != EOF)
     {
-        t.push_back(tmp[0]);
-        acc_x.push_back(tmp[1]);
-        acc_y.push_back(tmp[2]);
-        acc_z.push_back(tmp[3]);
-        omega_x.push_back(tmp[4]);
-        omega_y.push_back(tmp[5]);
-        omega_z.push_back(tmp[6]);
-        longitude.push_back(tmp[7]);
-        latitude.push_back(tmp[8]);
+        if (tmp[0] % == 0)
+        {
+            t.push_back(tmp[0]);
+            longitude.push_back(tmp[7]);
+            latitude.push_back(tmp[8]);
+        }
+
         data_length += 1;
     }
     fclose(fp);
@@ -100,16 +92,11 @@ int Estimated_position()
     x.resize(data_length);
     y.resize(data_length);
 
-    /** 移動平均の適用 **/
-    Moving_Average(acc_x);
-    Moving_Average(acc_y);
-    // Moving_Average(omega_z);
-
     /** 位置の積算 **/
-    const float dt = 1.0 / hz_6axis; // サンプリング間隔 [s]
-    float u = 0;                     // x方向車両速度 [m/s]
-    float v = 0;                     // y方向車両速度 [m/s]
-    float theta = 0;                 // 車両の角度 [rad]
+    const float dt = 1.0 / hz_gps; // サンプリング間隔 [s]
+    float u = 0;                   // x方向車両速度 [m/s]
+    float v = 0;                   // y方向車両速度 [m/s]
+    float theta = 0;               // 車両の角度 [rad]
     float x_tmp = 0;
     float y_tmp = 0;
 
@@ -161,21 +148,21 @@ void Moving_Average(vector<float> &data)
 /**************************************************************/
 void Write_data(int n)
 {
-    const float t = n / hz_6axis;
+    const float t = n / hz_gps;
 
     /** 走行位置の書き出し **/
     char filename[100];
-    sprintf(filename, "Estimated_position+MA/position/%d.dat", n);
+    sprintf(filename, "Estimate_position_GPS/position/%d.dat", n);
     fp = fopen(filename, "w");
     fprintf(fp, "%f\t%f\t%f\n", t, x[n], y[n]);
     fclose(fp);
 
     /** 走行経路の書き出し **/
-    sprintf(filename, "Estimated_position+MA/route/%d.dat", n);
+    sprintf(filename, "Estimate_position_GPS/route/%d.dat", n);
     fp = fopen(filename, "w");
     for (int i = 0; i <= n; i++)
     {
-        float t_tmp = i / hz_6axis;
+        float t_tmp = i / hz_gps;
         fprintf(fp, "%f\t%f\t%f\n", t_tmp, x[i], y[i]);
     }
     fclose(fp);
@@ -190,7 +177,7 @@ void Gnuplot(int n)
     FILE *gp;
 
     /** Gnuplot 初期設定 **/
-    const float t = n / hz_6axis;
+    const float t = n / hz_gps;
     const float x_max = 20.0;
     const float x_min = -20.0;
     const float y_max = 25.0;
@@ -198,9 +185,9 @@ void Gnuplot(int n)
 
     /** Gnuplot ファイル名の設定 **/
     char graphname[100], filename_1[100], filename_2[100];
-    sprintf(filename_1, "Estimated_position+MA/position/%d.dat", n);
-    sprintf(filename_2, "Estimated_position+MA/route/%d.dat", n);
-    sprintf(graphname, "Estimated_position+MA/graph/%04d.png", n);
+    sprintf(filename_1, "Estimate_position_GPS/position/%d.dat", n);
+    sprintf(filename_2, "Estimate_position_GPS/route/%d.dat", n);
+    sprintf(graphname, "Estimate_position_GPS/graph/%04d.png", n);
 
     /** Gnuplot 呼び出し **/
     if ((gp = popen("gnuplot", "w")) == NULL)

@@ -8,10 +8,10 @@ if not os.path.isdir(dir_path):
     os.makedirs(dir_path)
 
 # GIF動画の作成 #
-files = sorted(glob.glob("Estimated_position_IMU+GPS/graph/*.png"))
+files = sorted(glob.glob("Estimate_position_IMU/graph/*.png"))
 images = list(map(lambda file: Image.open(file), files))
 images[0].save(
-    "gif/Estimated_position_IMU+GPS.gif",
+    "gif/Estimate_position_IMU.gif",
     save_all=True,
     append_images=images[1:],
     duration=10.00,
