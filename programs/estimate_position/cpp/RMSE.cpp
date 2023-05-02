@@ -15,14 +15,21 @@ FILE *fp;
 mode_t dir_mode = S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IWGRP | S_IXGRP | S_IROTH | S_IXOTH | S_IXOTH;
 
 /** パラメータ **/
-const float hz_imu = 100; // サンプリング周期 [Hz]
+const float hz_imu = 100.0; // サンプリング周期 [Hz]
+const float hz_gps = 2.0;   // サンプリング周期 [Hz]
 
-/** 変数宣言 **/
-vector<float> x; // x方向位置 [m]
-vector<float> y; // y方向位置 [m]
+/** 変数設定 **/
+vector<float> x;     // x方向のシミュレーション結果(真値)
+vector<float> y;     // y方向のシミュレーション結果(真値)
+vector<float> x_imu; // x方向のIMU単独推定値
+vector<float> y_imu; // y方向のIMU単独推定値
+vector<float> x_gps; // x方向のIMU＋GPS推定値
+vector<float> y_gps; // y方向のIMU＋GPS推定値
 
 /** プロトタイプ宣言 **/
-void RMSE();
+int Get_number();
+void Read_data(const char *filename, vector<float> &x, vector<float> &y);
+float RMSE(vector<float> &data1, vector<float> &data2);
 
 /**************************************************************/
 // Function name : main
@@ -30,68 +37,97 @@ void RMSE();
 /**************************************************************/
 int main()
 {
-    /** ディレクトリの作成 **/
-    const char dir_0[] = "Estimate_position_IMU";
-    const char dir_1[] = "Estimate_position_IMU/position";
-    const char dir_2[] = "Estimate_position_IMU/route";
-    const char dir_3[] = "Estimate_position_IMU/graph";
+    int data_length = Get_number();
 
-    mkdir(dir_0, dir_mode);
-    mkdir(dir_1, dir_mode);
-    mkdir(dir_2, dir_mode);
-    mkdir(dir_3, dir_mode);
+    char filename[100];
 
-    int data_length = Estimate_position();
-    printf("data = %d\n", data_length);
+    /** シミュレーション(真値) **/
+    sprintf(filename, "Simulation/route/%d.dat", data_length - 1); // 読み込みファイル
+    Read_data(filename, x, y);
+    printf("Read: %s\n", filename);
 
-    for (int i = 0; i < data_length; i++)
-    {
-        Write_data(i);
+    /** IMU単独 **/
+    sprintf(filename, "Estimate_position_IMU/route/%d.dat", data_length - 1); // 読み込みファイル
+    Read_data(filename, x_imu, y_imu);
+    printf("Read: %s\n", filename);
 
-        if (i % 10 == 0)
-        {
-            Gnuplot(i);
-        }
-    }
+    /** IMU+GPS **/
+    sprintf(filename, "Estimate_position_IMU+GPS/route/%d.dat", data_length - 1); // 読み込みファイル
+    Read_data(filename, x_gps, y_gps);
+    printf("Read: %s\n", filename);
+
+    float rmse_x_imu = RMSE(x, x_imu);
+    float rmse_y_imu = RMSE(y, y_imu);
+    float distance_imu = sqrt(rmse_x_imu * rmse_x_imu + rmse_y_imu * rmse_y_imu);
+
+    float rmse_x_gps = RMSE(x, x_gps);
+    float rmse_y_gps = RMSE(y, y_gps);
+    float distance_gps = sqrt(rmse_x_gps * rmse_x_gps + rmse_y_gps * rmse_y_gps);
+
+    printf("IMU    \tx = %.3f [m]\ty = %.3f [m]\td = %.3f [m]\n", rmse_x_imu, rmse_y_imu, distance_imu);
+    printf("IMU+GPS\tx = %.3f [m]\ty = %.3f [m]\td = %.3f [m]\n", rmse_x_gps, rmse_y_gps, distance_gps);
 
     return 0;
+}
+
+/**************************************************************/
+// Function name : Get_number
+// Description   : データの読み込み
+/**************************************************************/
+int Get_number()
+{
+    int data_length; // データの長さ [-]
+
+    /** ファイル名の取得 **/
+    char buf[200];                                // 文字列用バッファ
+    char datafile[] = "Simulation/data/data.dat"; // 読み込みファイル
+    fp = fopen(datafile, "r");
+    while (fgets(buf, 200, fp) != NULL)
+    {
+        data_length += 1;
+    }
+    fclose(fp);
+
+    printf("data_length = %d\n", data_length);
+
+    return data_length;
+}
+
+/**************************************************************/
+// Function name : Read_data
+// Description   : データの読み込み
+/**************************************************************/
+void Read_data(const char *filename, vector<float> &x, vector<float> &y)
+{
+    float tmp[5]; // 読み込み時のバッファ
+
+    fp = fopen(filename, "r");
+    while (fscanf(fp, "%f\t%f\t%f\t%f\t%f", &tmp[0], &tmp[1], &tmp[2], &tmp[3], &tmp[4]) != EOF)
+    {
+        x.push_back(tmp[1]);
+        y.push_back(tmp[2]);
+    }
+    fclose(fp);
 }
 
 /**************************************************************/
 // Function name : RMSE
 // Description   : RMSEの計算
 /**************************************************************/
-void RMSE()
+float RMSE(vector<float> &data1, vector<float> &data2)
 {
-    /** 変数設定 **/
-    vector<float> t;         // 時刻 [s]
-    vector<float> acc_x;     // x方向加速度 [m/s2]
-    vector<float> acc_y;     // y方向加速度 [m/s2]
-    vector<float> acc_z;     // z方向加速度 [m/s2]
-    vector<float> omega_x;   // roll方向角加速度 [rad/s2]
-    vector<float> omega_y;   // pitch方向角加速度 [rad/s2]
-    vector<float> omega_z;   // yaw方向角加速度 [rad/s2]
-    vector<float> longitude; // 経度情報 [m]
-    vector<float> latitude;  // 緯度情報 [m]
+    float sum = 0;
+    float n = 0;
 
-    float tmp[8];    // 一時保存用バッファ [-]
-    int data_length; // データの長さ [-]
-
-    /** ファイルの読み込み **/
-    char filename[] = "Simulation/data/data.dat";
-    fp = fopen(filename, "r");
-    while ((fscanf(fp, "%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f", &tmp[0], &tmp[1], &tmp[2], &tmp[3], &tmp[4], &tmp[5], &tmp[6], &tmp[7], &tmp[8])) != EOF)
+    /** 総和計算 **/
+    for (int i = 0; i < data1.size(); i++)
     {
-        t.push_back(tmp[0]);
-        acc_x.push_back(tmp[1]);
-        acc_y.push_back(tmp[2]);
-        acc_z.push_back(tmp[3]);
-        omega_x.push_back(tmp[4]);
-        omega_y.push_back(tmp[5]);
-        omega_z.push_back(tmp[6]);
-        longitude.push_back(tmp[7]);
-        latitude.push_back(tmp[8]);
-        data_length += 1;
+        sum += (data2[i] - data1[i]) * (data2[i] - data1[i]);
+        n += 1;
     }
-    fclose(fp);
+
+    /** RSMEの計算 **/
+    float rmse = sqrt(1.0 / n * sum);
+
+    return rmse;
 }

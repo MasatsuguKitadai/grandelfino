@@ -150,7 +150,7 @@ void Write_data(int n)
     for (int i = 0; i <= n; i++)
     {
         float t_tmp = i / hz_imu;
-        fprintf(fp, "%f\t%f\t%f\n", t_tmp, x[i], y[i]);
+        fprintf(fp, "%f\t%f\t%f\t%f\t%f\n", t_tmp, x[i], y[i], 0.0, 0.0);
     }
     fclose(fp);
 }
