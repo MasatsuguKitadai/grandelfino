@@ -60,7 +60,13 @@ h1 {
 
 h2 {
     margin: 0 0 1rem 0;
-    font-size: 1.4rem;
+    font-size: 1.5rem;
+}
+
+h3 {
+    margin: 10px 0;
+    border-bottom: 5px dashed royalblue;
+    font-size: 1.2rem;
 }
 
 h4 {
@@ -125,9 +131,29 @@ td {
 
 .right {
     width: 50%;
+    margin-bottom: 20px;
 }
 
 .graph {
     margin: 0;
     width: 90%;
+}
+
+#img_mpu6050 {
+    margin: auto;
+    padding: 2rem;
+    width: 50%;
+}
+
+#img_mpu6050_2 {
+    margin: auto;
+    padding: 0.5rem;
+    width: 70%;
+}
+
+#img_mpu6050_3 {
+    margin: auto;
+    padding: 0.5rem;
+
+    width: 70%;
 }

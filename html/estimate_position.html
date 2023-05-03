@@ -15,7 +15,8 @@
         <h1 class="sub_title">Estimate Position</h1>
     </header>
     <main>
-        <h2>GPSと加速度センサによる自己位置推定精度の話</h2>
+        <h2>GPSと加速度センサによる自己位置推定の話</h2>
+        <h3>1. GPSがあるとどのくらい推定精度が向上するのか？</h3>
         <div class="topic">
             <div class="left">
                 <img class="graph" src="../programs/estimate_position/gif/Simulation.gif" alt="simulation_gif">
@@ -84,6 +85,51 @@
                 </table>
                 <p>要するに加速度センサーに乗る積算誤差を<br>
                     GPSで補正すれば使えるデータになる</p>
+            </div>
+        </div>
+        <h3>2. 加速度センサを使ってみる</h3>
+        <div class="topic">
+            <div class="left">
+                <img id="img_mpu6050" src="../img/mpu6050.jpg" alt="MPU6050">
+            </div>
+            <div class="right">
+                <h4>6軸センサ (MPU6050)</h4>
+                <p>いわゆる "IMU" と呼ばれるセンサです<br>
+                    加速度3成分(x,y,z) + 角加速度3成分(x,y,z)<br>
+                    の合計 6軸 についてデータを取得します</p>
+                <p><a href="https://www.amazon.co.jp/dp/B07MPBMRWD">Amazon</a>で 5個入 1500円くらいです
+                    <br>はんだ下手だけど機械科だから許して&#129394
+                </p>
+                <p><a
+                        href="https://ja.wikipedia.org/wiki/%E6%85%A3%E6%80%A7%E8%A8%88%E6%B8%AC%E8%A3%85%E7%BD%AE#:~:text=%E6%85%A3%E6%80%A7%E8%A8%88%E6%B8%AC%E8%A3%85%E7%BD%AE%EF%BC%88%E8%8B%B1%E8%AA%9E%3A%20inertial,%E5%8A%A0%E9%80%9F%E5%BA%A6%E3%82%92%E6%A4%9C%E5%87%BA%E3%81%99%E3%82%8B%E8%A3%85%E7%BD%AE%E3%80%82">IMUとは？(wikiに飛びます)</a>
+                </p>
+            </div>
+        </div>
+        <div class="topic">
+            <div class="left">
+                <img id="img_mpu6050_2" src="../img/arduino_mpu6050.jpg" alt="MPU6050 & Arudino">
+            </div>
+            <div class="right">
+                <h4>Arduino への接続</h4>
+                <p>Arduino へ 6軸センサを接続します<br>
+                    詳しい接続方法や使用しているプログラムは<br>
+                    以下のサイトを参考にしました</p>
+                <p><a href="https://qiita.com/key/items/8c6b684e6308cc5f451f">参考："Arduinoで6軸センサを動かしてみる"</a>
+                </p>
+            </div>
+        </div>
+        <div class="topic">
+            <div class="left">
+                <img id="img_mpu6050_3" src="../img/mpu6050_excel.png" alt="MPU6050">
+            </div>
+            <div class="right">
+                <h4>計測データの取得 (補足)</h4>
+                <p>どうやら Excel のアドオンを使えば<br>
+                    計測データを直接 Excel に取り込めるらしい...<br>
+                    テストやPCを接続したまま計測可能なら<br>
+                    データ処理が簡単そうですな</p>
+                <p><a href="https://qiita.com/mapletree/items/bbf21c7e8d5396a6aed1">参考："arduinoからのデータをExcelに保存する"</a>
+                </p>
             </div>
         </div>
     </main>
