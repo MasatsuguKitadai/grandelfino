@@ -99,7 +99,7 @@ p {
 .index li {
     color: royalblue;
     margin: 0.5rem 0;
-    font-weight: bold;
+    font-weight: bolder;
     font-size: 1rem
 }
 
@@ -139,7 +139,7 @@ td {
 }
 
 .box {
-    margin: 1rem;
+    margin: 2rem;
     padding: 1rem;
     background-color: #D9E5FF;
 }
