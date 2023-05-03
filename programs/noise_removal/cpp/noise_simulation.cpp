@@ -22,9 +22,9 @@ const float g = 9.80665;        // 重力加速度 [m/s2]
 /** 各種パラメータ **/
 const float t = 1.0;          // 計測時刻 [s]
 const int hz = 1000;          // サンプリング周波数 [Hz]
-const int hz_sin = 2.0;       // 正弦波の周期 [Hz]
+const int hz_sin = 100.0;     // 正弦波の周期 [Hz]
 const float wave_value = 1.0; // 正弦波の大きさ [-]
-const float err_value = 0.2;  // エラーの大きさ [-]
+const float err_value = 0.5;  // エラーの大きさ [-]
 
 /** グローバル変数 **/
 vector<float> data(t *hz);  // 基本データ
@@ -45,9 +45,9 @@ void Gnuplot_noise(const char filename[], const char graphname[], const char tit
 int main()
 {
     /** ディレクトリの作成 **/
-    const char dir_0[] = "simulation";
-    const char dir_1[] = "simulation/data";
-    const char dir_2[] = "simulation/graph";
+    const char dir_0[] = "Simulation";
+    const char dir_1[] = "Simulation/data";
+    const char dir_2[] = "Simulation/graph";
     mkdir(dir_0, dir_mode);
     mkdir(dir_1, dir_mode);
     mkdir(dir_2, dir_mode);
@@ -56,7 +56,7 @@ int main()
     Sin_wave(data);
 
     /** データの書き出し(1) **/
-    const char basic_data[] = "simulation/data/basic_data.dat";
+    const char basic_data[] = "Simulation/data/basic_data.dat";
     Write_data(basic_data);
 
     /** 誤差データの作成 **/
@@ -76,13 +76,13 @@ int main()
     }
 
     /** データの書き出し(2) **/
-    const char noise_data[] = "simulation/data/noise_data.dat";
+    const char noise_data[] = "Simulation/data/noise_data.dat";
     Write_data(noise_data);
 
     /** グラフの作成 **/
-    const char basic_graph[] = "simulation/graph/basic_data.png";
+    const char basic_graph[] = "Simulation/graph/basic_data.svg";
     const char basic_title[] = "Sin wave : Basic data";
-    const char noise_graph[] = "simulation/graph/noise_data.png";
+    const char noise_graph[] = "Simulation/graph/noise_data.svg";
     const char noise_title[] = "Sin wave : Noise data";
     Gnuplot_noise(basic_data, basic_graph, basic_title);
     Gnuplot_noise(noise_data, noise_graph, noise_title);
@@ -164,10 +164,10 @@ void Gnuplot_noise(const char filename[], const char graphname[], const char tit
     FILE *gp;
 
     /** Gnuplot 初期設定 **/
-    const int x_max = t;
-    const int x_min = 0;
-    const float y_max = 1.5;
-    const float y_min = -1.5;
+    const float x_max = t / 10;
+    const float x_min = 0;
+    const float y_max = 2.0;
+    const float y_min = -2.0;
 
     /** Gnuplot 呼び出し **/
     if ((gp = popen("gnuplot", "w")) == NULL)
@@ -177,17 +177,17 @@ void Gnuplot_noise(const char filename[], const char graphname[], const char tit
     }
 
     /** Gnuplot 描画設定 **/
-    fprintf(gp, "set terminal png size 800, 500 font 'Times New Roman, 20'\n");
+    fprintf(gp, "set terminal svg size 800, 500 font 'Times New Roman, 20'\n");
     fprintf(gp, "set size ratio 0.5\n");
     fprintf(gp, "set output '%s'\n", graphname);                            // 出力ファイル
     fprintf(gp, "unset key\n");                                             // 凡例非表示
-    fprintf(gp, "set xrange [%d:%d]\n", x_min, x_max);                      // x軸の描画範囲
+    fprintf(gp, "set xrange [%.3f:%.3f]\n", x_min, x_max);                  // x軸の描画範囲
     fprintf(gp, "set yrange [%.3f:%.3f]\n", y_min, y_max);                  // y軸の描画範囲
     fprintf(gp, "set title '%s'\n", title);                                 // グラフタイトル
     fprintf(gp, "set xlabel '{/Times-Italic t} [s]' offset 0.0, 0.0\n");    // x軸のラベル
     fprintf(gp, "set ylabel '{/Times-Italic F(t)} [-]' offset 1.0, 0.0\n"); // y軸のラベル
-    fprintf(gp, "set xtics 0.1 offset 0.0, 0.0\n");                         // x軸の間隔
-    fprintf(gp, "set ytics 0.5 offset 0.0, 0.0\n");                         // y軸の間隔
+    fprintf(gp, "set xtics 0.01 offset 0.0, 0.0\n");                        // x軸の間隔
+    fprintf(gp, "set ytics 1.0 offset 0.0, 0.0\n");                         // y軸の間隔
 
     /** Gnuplot 書き出し **/
     fprintf(gp, "plot '%s' using 1:2 with lines lc 'black' notitle\n", filename);
