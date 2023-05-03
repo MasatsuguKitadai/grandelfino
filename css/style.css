@@ -138,6 +138,16 @@ td {
     margin-bottom: 20px;
 }
 
+.box {
+    margin: 1rem;
+    padding: 1rem;
+    background-color: #D9E5FF;
+}
+
+.box p {
+    margin: auto;
+}
+
 .graph {
     margin: auto;
     width: 90%;
