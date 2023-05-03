@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8" />
-    <title>Grattan web</title>
+    <title>Macaroni Grattan</title>
     <link rel="stylesheet" type="text/css" href="../css/style.css" />
     <script type="text/javascript"
         asyncsrc="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=MML_SVG"></script>
@@ -26,7 +26,7 @@
                 <table>
                     <tr>
                         <td>走行速度</td>
-                        <td>40 </td>
+                        <td>40.00 </td>
                         <td>[km/h]</td>
                     </tr>
                     <tr>
@@ -36,7 +36,7 @@
                     </tr>
                     <tr>
                         <td>GPS周波数</td>
-                        <td>2.0</td>
+                        <td>2.000</td>
                         <td>[Hz]</td>
                     </tr>
                     <tr>
@@ -71,8 +71,7 @@
             </div>
             <div class="right">
                 <h3>加速度データの積算 + GPS位置補正</h3>
-                <p>要するに加速度センサーに乗る積算誤差を<br>
-                    GPSで補正すれば使えるデータになる</p>
+                <p>IMU単独推定時に比べて，<br>RMSEは約10%まで減少する</p>
                 <table>
                     <tr>
                         <td>RMSE (真値との誤差)</td>
@@ -80,7 +79,8 @@
                         <td>[m]</td>
                     </tr>
                 </table>
-                <p>IMU単独推定時に比べて，<br>RMSEは約10%まで減少する</p>
+                <p>要するに加速度センサーに乗る積算誤差を<br>
+                    GPSで補正すれば使えるデータになる</p>
             </div>
         </div>
     </main>
