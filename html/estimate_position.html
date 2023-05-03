@@ -15,7 +15,7 @@
         <h1 class="sub_title">Estimate Position</h1>
     </header>
     <main>
-        <h2>シミュレーションを使ったGPSと加速度センサによる自己位置推定精度の話</h2>
+        <h2>GPSと加速度センサによる自己位置推定精度の話</h2>
         <div class="topic">
             <div class="left">
                 <img class="graph" src="../programs/estimate_position/gif/Simulation.gif" alt="simulation_gif">
@@ -57,7 +57,7 @@
                 <table>
                     <tr>
                         <td>RMSE (真値との誤差)</td>
-                        <td>0.834</td>
+                        <td>1.820</td>
                         <td>[m]</td>
                     </tr>
                 </table>
@@ -76,13 +76,17 @@
                 <table>
                     <tr>
                         <td>RMSE (真値との誤差)</td>
-                        <td>0.146</td>
+                        <td>0.143</td>
                         <td>[m]</td>
                     </tr>
                 </table>
+                <p>IMU単独推定時に比べて，<br>RMSEは約10%まで減少する</p>
             </div>
         </div>
     </main>
+    <footer>
+        <h6> Macaroni Grattan / Grattan Official WEB Site | &copy; 2023 Grandelfino</h6>
+    </footer>
 </body>
 
 </html>

@@ -30,6 +30,7 @@ vector<float> y_gps; // y方向のIMU＋GPS推定値
 int Get_number();
 void Read_data(const char *filename, vector<float> &x, vector<float> &y);
 float RMSE(vector<float> &data1, vector<float> &data2);
+float RMSE_2(vector<float> &data11, vector<float> &data12, vector<float> &data21, vector<float> &data22);
 
 /**************************************************************/
 // Function name : main
@@ -58,14 +59,14 @@ int main()
 
     float rmse_x_imu = RMSE(x, x_imu);
     float rmse_y_imu = RMSE(y, y_imu);
-    float distance_imu = sqrt(rmse_x_imu * rmse_x_imu + rmse_y_imu * rmse_y_imu);
+    float rmse_v_imu = RMSE_2(x, x_imu, y, y_imu);
 
     float rmse_x_gps = RMSE(x, x_gps);
     float rmse_y_gps = RMSE(y, y_gps);
-    float distance_gps = sqrt(rmse_x_gps * rmse_x_gps + rmse_y_gps * rmse_y_gps);
+    float rmse_v_gps = RMSE_2(x, x_gps, y, y_gps);
 
-    printf("IMU    \tx = %.3f [m]\ty = %.3f [m]\td = %.3f [m]\n", rmse_x_imu, rmse_y_imu, distance_imu);
-    printf("IMU+GPS\tx = %.3f [m]\ty = %.3f [m]\td = %.3f [m]\n", rmse_x_gps, rmse_y_gps, distance_gps);
+    printf("IMU    \tx = %.3f [m]\ty = %.3f [m]\td = %.3f [m]\n", rmse_x_imu, rmse_y_imu, rmse_v_imu);
+    printf("IMU+GPS\tx = %.3f [m]\ty = %.3f [m]\td = %.3f [m]\n", rmse_x_gps, rmse_y_gps, rmse_v_gps);
 
     return 0;
 }
@@ -123,6 +124,28 @@ float RMSE(vector<float> &data1, vector<float> &data2)
     for (int i = 0; i < data1.size(); i++)
     {
         sum += (data2[i] - data1[i]) * (data2[i] - data1[i]);
+        n += 1;
+    }
+
+    /** RSMEの計算 **/
+    float rmse = sqrt(1.0 / n * sum);
+
+    return rmse;
+}
+
+/**************************************************************/
+// Function name : RMSE_2
+// Description   : 2成分のRMSEの計算
+/**************************************************************/
+float RMSE_2(vector<float> &data11, vector<float> &data12, vector<float> &data21, vector<float> &data22)
+{
+    float sum = 0;
+    float n = 0;
+
+    /** 総和計算 **/
+    for (int i = 0; i < data11.size(); i++)
+    {
+        sum += (data12[i] - data11[i]) * (data12[i] - data11[i]) + (data22[i] - data21[i]) * (data22[i] - data21[i]);
         n += 1;
     }
 

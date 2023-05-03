@@ -202,7 +202,7 @@ int main()
     {
         float t_tmp = i / hz_imu;
         fprintf(fp, "%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\n", t_tmp, acc_xl[i], acc_yl[i], 0.0, 0.0, 0.0, omegal[i], longitude[i], latitude[i]);
-        printf("%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\t%f\n", t_tmp, acc_xl[i], acc_yl[i], 0.0, 0.0, 0.0, omegal[i], longitude[i], latitude[i]);
+        printf("%f\t%f\t%f\t%f\t%f\t%f\n", t_tmp, acc_xl[i], acc_yl[i], omegal[i], longitude[i], latitude[i]);
     }
     fclose(fp);
 
