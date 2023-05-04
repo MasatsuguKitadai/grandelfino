@@ -20,17 +20,11 @@ const float pi = 4 * atan(1.0); // 円周率 [rad]
 const float g = 9.80665;        // 重力加速度 [m/s2]
 
 /** 各種パラメータ **/
-const float t = 1.0;    // 計測時刻 [s]
-const int hz = 1000;    // サンプリング周波数 [Hz]
-const int hz_sin = 2.0; // 正弦波の周期 [Hz]
+const float ; // バンドパスフィルタのしきい値 [-]
 
-/** グローバル変数 **/
-vector<float> data(t *hz);  // 基本データ
-vector<float> err_1(t *hz); // 乱数配列
-vector<float> err_2(t *hz); // 乱数配列
 
 /** プロトタイプ宣言 **/
-void DFT(const char readfile[], const char writefile[]);
+void Bandpass_Filter(const char readfile[], const char writefile[]);
 void Gnuplot_DFT(const char filename[], const char graphname[], const char title[]);
 
 /**************************************************************/
@@ -40,41 +34,32 @@ void Gnuplot_DFT(const char filename[], const char graphname[], const char title
 int main()
 {
     /** ディレクトリの作成 **/
-    const char dir_0[] = "DFT";
-    const char dir_1[] = "DFT/data";
-    const char dir_2[] = "DFT/graph";
+    const char dir_0[] = "Bandpass";
+    const char dir_1[] = "Bandpass/data";
+    const char dir_2[] = "Bandpass/graph";
     mkdir(dir_0, dir_mode);
     mkdir(dir_1, dir_mode);
     mkdir(dir_2, dir_mode);
 
-    /** 基本データのDFT **/
-    const char readfile_1[] = "Simulation/data/basic_data.dat";
-    const char writefile_1[] = "DFT/data/basic_data.dat";
-    const char graphfile_1[] = "DFT/graph/basic_data.svg";
-    const char graphtitle_1[] = "DFT : Basic data";
-    DFT(readfile_1, writefile_1);
-    Gnuplot_DFT(writefile_1, graphfile_1, graphtitle_1);
-
     /** ノイズデータのDFT **/
-    const char readfile_2[] = "Simulation/data/noise_data.dat";
-    const char writefile_2[] = "DFT/data/noise_data.dat";
-    const char graphfile_2[] = "DFT/graph/noise_data.svg";
-    const char graphtitle_2[] = "DFT : Noise data";
-    DFT(readfile_2, writefile_2);
-    Gnuplot_DFT(writefile_2, graphfile_2, graphtitle_2);
+    const char readfile[] = "DFT/data/noise_data.dat";
+    const char writefile[] = "Bandpass/data/noise_data.dat";
+    const char graphfile[] = "Bandpass/graph/noise_data.svg";
+    const char graphtitle[] = "Bandpass Filter : Noise data";
+    Bandpass_Filter(readfile, writefile);
+    Gnuplot_DFT(writefile, graphfile, graphtitle);
 
     return 0;
 }
 
 /**************************************************************/
-// Function name : DFT
+// Function name : Bandpass_Filter
 // Description   : 離散フーリエ変換
 /**************************************************************/
-void DFT(const char readfile[], const char writefile[])
+void Bandpass_Filter(const char readfile[], const char writefile[])
 {
     vector<float> t;
     vector<float> value;
-    vector<float> spectrum;
 
     /** ファイルの読み込み **/
     float t_tmp, value_tmp;
@@ -86,19 +71,13 @@ void DFT(const char readfile[], const char writefile[])
     }
     fclose(fp);
 
-    /** 実数部分と虚数部分に分けてフーリエ変換 **/
-    int n = value.size();
+    /** バンドパスフィルタの適用 **/
     for (int i = 0; i < value.size(); i++)
     {
-        float re = 0.0;
-        float im = 0.0;
-        for (int j = 0; j < value.size(); j++)
+        if (/* condition */)
         {
-            re += value[j] * cos(2.0 * pi * j * i / n);
-            im += -value[j] * sin(2.0 * pi * j * i / n);
+            /* code */
         }
-        float spectrum_tmp = sqrt(re * re + im * im);
-        spectrum.push_back(spectrum_tmp);
     }
 
     /** データの書き出し **/
