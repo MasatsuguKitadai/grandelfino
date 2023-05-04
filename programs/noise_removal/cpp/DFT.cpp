@@ -74,6 +74,8 @@ void DFT(const char readfile[], const char writefile[])
 {
     vector<float> t;
     vector<float> value;
+    vector<float> re;
+    vector<float> im;
     vector<float> spectrum;
 
     /** ファイルの読み込み **/
@@ -90,14 +92,16 @@ void DFT(const char readfile[], const char writefile[])
     int n = value.size();
     for (int i = 0; i < value.size(); i++)
     {
-        float re = 0.0;
-        float im = 0.0;
+        float re_tmp = 0;
+        float im_tmp = 0;
         for (int j = 0; j < value.size(); j++)
         {
-            re += value[j] * cos(2.0 * pi * j * i / n);
-            im += -value[j] * sin(2.0 * pi * j * i / n);
+            re_tmp += value[j] * cos(2.0 * pi * j * i / n);
+            im_tmp += -value[j] * sin(2.0 * pi * j * i / n);
         }
-        float spectrum_tmp = sqrt(re * re + im * im);
+        float spectrum_tmp = sqrt(re_tmp * re_tmp + im_tmp * im_tmp);
+        re.push_back(re_tmp);
+        re.push_back(im_tmp);
         spectrum.push_back(spectrum_tmp);
     }
 
@@ -105,7 +109,7 @@ void DFT(const char readfile[], const char writefile[])
     fp = fopen(writefile, "w");
     for (int i = 0; i < value.size(); i++)
     {
-        fprintf(fp, "%d\t%f\n", i, spectrum[i]);
+        fprintf(fp, "%f\t%f\t%f\t%f\n", (float)i, spectrum[i], re[i], im[i]);
     }
     fclose(fp);
 }
