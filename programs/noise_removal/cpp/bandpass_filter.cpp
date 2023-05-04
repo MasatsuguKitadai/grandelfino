@@ -41,13 +41,21 @@ int main()
     mkdir(dir_1, dir_mode);
     mkdir(dir_2, dir_mode);
 
+    /** 基本データのDFT **/
+    const char readfile_1[] = "DFT/data/basic_data.dat";
+    const char writefile_1[] = "Bandpass/data/basic_data.dat";
+    const char graphfile_1[] = "Bandpass/graph/basic_data.svg";
+    const char graphtitle_1[] = "Bandpass Filter : Basic data";
+    Bandpass_Filter(readfile_1, writefile_1);
+    Gnuplot_DFT(writefile_1, graphfile_1, graphtitle_1);
+
     /** ノイズデータのDFT **/
-    const char readfile[] = "DFT/data/noise_data.dat";
-    const char writefile[] = "Bandpass/data/noise_data.dat";
-    const char graphfile[] = "Bandpass/graph/noise_data.svg";
-    const char graphtitle[] = "Bandpass Filter : Noise data";
-    Bandpass_Filter(readfile, writefile);
-    Gnuplot_DFT(writefile, graphfile, graphtitle);
+    const char readfile_2[] = "DFT/data/noise_data.dat";
+    const char writefile_2[] = "Bandpass/data/noise_data.dat";
+    const char graphfile_2[] = "Bandpass/graph/noise_data.svg";
+    const char graphtitle_2[] = "Bandpass Filter : Noise data";
+    Bandpass_Filter(readfile_2, writefile_2);
+    Gnuplot_DFT(writefile_2, graphfile_2, graphtitle_2);
 
     return 0;
 }
@@ -84,7 +92,7 @@ void Bandpass_Filter(const char readfile[], const char writefile[])
     fp = fopen(writefile, "w");
     for (int i = 0; i < value.size(); i++)
     {
-        fprintf(fp, "%d, %f\n", i, value[i]);
+        fprintf(fp, "%d\t%f\n", i, value[i]);
     }
     fclose(fp);
 }

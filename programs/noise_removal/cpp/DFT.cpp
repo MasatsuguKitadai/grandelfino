@@ -105,7 +105,7 @@ void DFT(const char readfile[], const char writefile[])
     fp = fopen(writefile, "w");
     for (int i = 0; i < value.size(); i++)
     {
-        fprintf(fp, "%d, %f\n", i, spectrum[i]);
+        fprintf(fp, "%d\t%f\n", i, spectrum[i]);
     }
     fclose(fp);
 }
