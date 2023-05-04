@@ -20,8 +20,8 @@ const float pi = 4 * atan(1.0); // 円周率 [rad]
 const float g = 9.80665;        // 重力加速度 [m/s2]
 
 /** 各種パラメータ **/
-const float ; // バンドパスフィルタのしきい値 [-]
-
+const float threshold = 50.0; // バンドパスフィルタのしきい値 [-]
+const int hz = 1000;          // サンプリング周波数 [Hz]
 
 /** プロトタイプ宣言 **/
 void Bandpass_Filter(const char readfile[], const char writefile[]);
@@ -74,9 +74,9 @@ void Bandpass_Filter(const char readfile[], const char writefile[])
     /** バンドパスフィルタの適用 **/
     for (int i = 0; i < value.size(); i++)
     {
-        if (/* condition */)
+        if (threshold > value[i])
         {
-            /* code */
+            value[i] = 0;
         }
     }
 
@@ -84,7 +84,7 @@ void Bandpass_Filter(const char readfile[], const char writefile[])
     fp = fopen(writefile, "w");
     for (int i = 0; i < value.size(); i++)
     {
-        fprintf(fp, "%d, %f\n", i, spectrum[i]);
+        fprintf(fp, "%d, %f\n", i, value[i]);
     }
     fclose(fp);
 }
@@ -120,8 +120,6 @@ void Gnuplot_DFT(const char filename[], const char graphname[], const char title
     fprintf(gp, "set title '%s'\n", title);                                               // グラフタイトル
     fprintf(gp, "set xlabel '{/Times-Italic Frequency} [Hz]' offset 0.0, 0.0\n");         // x軸のラベル
     fprintf(gp, "set ylabel '{/Times-Italic Amplitude Spectrum} [-]' offset 1.0, 0.0\n"); // y軸のラベル
-    // fprintf(gp, "set xtics 0.1 offset 0.0, 0.0\n");                                       // x軸の間隔
-    // fprintf(gp, "set ytics 0.5 offset 0.0, 0.0\n");                                       // y軸の間隔
 
     /** Gnuplot 書き出し **/
     fprintf(gp, "plot '%s' using 1:2 with lines lc 'black' notitle\n", filename);
