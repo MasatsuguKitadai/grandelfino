@@ -101,7 +101,7 @@ void DFT(const char readfile[], const char writefile[])
         }
         float spectrum_tmp = sqrt(re_tmp * re_tmp + im_tmp * im_tmp);
         re.push_back(re_tmp);
-        re.push_back(im_tmp);
+        im.push_back(im_tmp);
         spectrum.push_back(spectrum_tmp);
     }
 

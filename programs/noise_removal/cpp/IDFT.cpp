@@ -20,14 +20,8 @@ const float pi = 4 * atan(1.0); // 円周率 [rad]
 const float g = 9.80665;        // 重力加速度 [m/s2]
 
 /** 各種パラメータ **/
-const float t = 1.0;    // 計測時刻 [s]
-const int hz = 1000;    // サンプリング周波数 [Hz]
-const int hz_sin = 2.0; // 正弦波の周期 [Hz]
-
-/** グローバル変数 **/
-vector<float> data(t *hz);  // 基本データ
-vector<float> err_1(t *hz); // 乱数配列
-vector<float> err_2(t *hz); // 乱数配列
+const float t = 1.0; // 計測時刻 [s]
+const int hz = 1000; // サンプリング周波数 [Hz]
 
 /** プロトタイプ宣言 **/
 void IDFT(const char readfile[], const char writefile[]);
@@ -67,37 +61,38 @@ int main()
 }
 
 /**************************************************************/
-// Function name : DFT
-// Description   : 離散フーリエ変換
+// Function name : IDFT
+// Description   : 逆離散フーリエ変換
 /**************************************************************/
-void DFT(const char readfile[], const char writefile[])
+void IDFT(const char readfile[], const char writefile[])
 {
-    vector<float> t;
-    vector<float> value;
+    vector<float> hz_dft;
     vector<float> re;
     vector<float> im;
     vector<float> spectrum;
 
     /** ファイルの読み込み **/
-    float t_tmp, value_tmp;
+    float hz_tmp, spectrum_tmp, re_tmp, im_tmp;
     fp = fopen(readfile, "r");
-    while ((fscanf(fp, "%f\t%f", &t_tmp, &value_tmp)) != EOF)
+    while (fscanf(fp, "%f\t%f\t%f\t%f\n", (float)hz_tmp, spectrum_tmp, re_tmp, im_tmp) != EOF)
     {
-        t.push_back(t_tmp);
-        value.push_back(value_tmp);
+        hz_dft.push_back(hz_tmp);
+        spectrum.push_back(spectrum_tmp);
+        re.push_back(re_tmp);
+        im.push_back(im_tmp);
     }
     fclose(fp);
 
     /** 実数部分と虚数部分に分けてフーリエ変換 **/
-    int n = value.size();
-    for (int i = 0; i < value.size(); i++)
+    int n = hz_dft.size();
+    for (int i = 0; i < hz_dft.size(); i++)
     {
-        float re_tmp = 0;
-        float im_tmp = 0;
+        re_tmp = 0;
+        im_tmp = 0;
         for (int j = 0; j < value.size(); j++)
         {
             re_tmp += value[j] * cos(2.0 * pi * j * i / n);
-            im_tmp += -value[j] * sin(2.0 * pi * j * i / n);
+            im_tmp += value[j] * sin(2.0 * pi * j * i / n);
         }
         float spectrum_tmp = sqrt(re_tmp * re_tmp + im_tmp * im_tmp);
         re.push_back(re_tmp);
