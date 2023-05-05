@@ -15,20 +15,21 @@
         <h1 class="sub_title">Noise Removal</h1>
     </header>
     <main>
-        <h2>センサ計測データのノイズ処理の話</h2>
+        <h2>周波数解析によるセンサ計測データのノイズ処理の話</h2>
         <h3>1. 数値シミュレーションで正弦波を作る</h3>
         <div class="topic">
             <div class="left">
                 <img class="graph" src="../programs/noise_removal/Simulation/graph/basic_data.svg" alt="sin_wave:basic">
+                <p class="caption">Fig.1 正弦波</p>
             </div>
             <div class="right">
                 <h4>正弦波（真値）</h4>
                 <p>今回は，規則正しい正弦波を使って<br>数値シミュレーションを行います</p>
-                <p>与える正弦波の周波数は 100 [Hz] です<br>覚えておいてください...</p>
+                <p>与える正弦波の周波数は 10 [Hz] です<br>覚えておいてください...</p>
                 <table>
                     <tr>
                         <td>正弦波の周波数</td>
-                        <td>100.0</td>
+                        <td>10.00</td>
                         <td>[Hz]</td>
                     </tr>
                     <tr>
@@ -47,6 +48,7 @@
         <div class="topic">
             <div class="left">
                 <img class="graph" src="../programs/noise_removal/Simulation/graph/noise_data.svg" alt="sin_wave:noisy">
+                <p class="caption">Fig.2 ノイズを含む正弦波</p>
             </div>
             <div class="right">
                 <h4>正弦波（ノイズあり）</h4>
@@ -54,8 +56,9 @@
                     に従った<br>
                     振れ幅 0.5 [-] のノイズを正弦波に与えてみます...</p>
                 <p>データはギザギザになりますね</p>
-                <p>このままでは計測したい波形がよくわかりません...<br>
-                    しかし，一般的な計測データにはノイズがつきものです</p>
+                <p>今回は単純な正弦波なので，大まかにはわかりますが<br>
+                    もう少しはっきりさせたいところです...</p>
+                <p>しかし，一般的な計測データにはノイズがつきもの</p>
                 <p>どうにかして，使えるデータにならないでしょうか&#129300;</p>
                 <p>現在は，横軸に"時刻"を取っていますが...</p>
             </div>
@@ -64,7 +67,9 @@
         <div class="topic">
             <div class="left">
                 <img class="graph" src="../programs/noise_removal/DFT/graph/basic_data.svg" alt="sin_wave:fft">
+                <p class="caption">Fig.3 もとの波形のフーリエ変換結果</p>
                 <img class="graph" src="../programs/noise_removal/DFT/graph/noise_data.svg" alt="sin_wave:fft">
+                <p class="caption">Fig.4 ノイズを含む波形のフーリエ変換結果</p>
             </div>
             <div class="right">
                 <h4>フーリエ変換を使った周波数解析</h4>
@@ -90,20 +95,7 @@
         <div class="topic">
             <div class="left">
                 <img class="graph" src="../programs/noise_removal/Bandpass/graph/noise_data.svg" alt="img">
-                <table>
-                    <tr>
-                        <td>"ノイズ無し"のピーク</td>
-                        <td>500.0</td>
-                        <td>[-]</td>
-                    </tr>
-                    <tr>
-                        <td>"ノイズ有り"のピーク</td>
-                        <td>495.8</td>
-                        <td>[-]</td>
-                    </tr>
-                </table>
-                <p class="comment">100[Hz] に見られるピーク値は<br>
-                    1%ほど減少していました</p>
+                <p class="caption">Fig.5 ノイズを含む波形に対するバンドパスフィルタの適用結果</p>
             </div>
             <div class="right">
                 <h4>バンドパスフィルタについて</h4>
@@ -128,13 +120,23 @@
         </div>
         <div class="topic">
             <div class="left">
-                <img class="graph" src="../programs/noise_removal/Simulation/graph/" alt="sin_wave:ma">
+                <img class="graph" src="../programs/noise_removal/IDFT/graph/noise_data.svg" alt="sin_wave:ma">
+                <p class="caption">Fig.6 ノイズを含む波形の逆フーリエ変換結果</p>
             </div>
             <div class="right">
                 <h4>逆フーリエ変換による時間領域への変換</h4>
-                <p>(作成中)</p>
+                <p>フーリエ変換によって周波数解析を行ったデータに<br>
+                    バンドパスフィルタを適用して不要なノイズ成分を<br>
+                    除去しました</p>
+                <p>次はこのデータを周波数領域から時間領域へと<br>
+                    変換しなければいけません</p>
+                <p>そこで，逆フーリエ変換 によってもとの波形へと<br>戻してあげます</p>
+                <p>詳しい説明は割愛しますが<br>適用した結果は左図のようになります</p>
+                <p>灰色線が"ノイズ処理前のデータ"<br>赤色線が"ノイズ処理後のデータ"です</p>
+                <p></p>
             </div>
         </div>
+        <h3>3. その他のデータ処理方法 (参考程度)</h3>
         <div class="topic">
             <div class="left">
                 <img class="graph" src="../programs/noise_removal/Simulation/graph/" alt="sin_wave:ma">
@@ -146,8 +148,7 @@
                         Average)</a> <br>という方法もあります (ノイズ処理とは若干異なる?)<br>
                     しかし，めんどくさいのでここでは割愛します
                 </p>
-                <p>時間があれば追記するかも...
-                </p>
+                <p>時間があれば追記するかも...</p>
             </div>
         </div>
     </main>

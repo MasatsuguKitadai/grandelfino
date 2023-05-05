@@ -22,7 +22,7 @@ const float g = 9.80665;        // 重力加速度 [m/s2]
 /** 各種パラメータ **/
 const float t = 1.0;          // 計測時刻 [s]
 const int hz = 1000;          // サンプリング周波数 [Hz]
-const int hz_sin = 100.0;     // 正弦波の周期 [Hz]
+const int hz_sin = 10.0;      // 正弦波の周期 [Hz]
 const float wave_value = 1.0; // 正弦波の大きさ [-]
 const float err_value = 0.5;  // エラーの大きさ [-]
 
@@ -164,7 +164,7 @@ void Gnuplot_noise(const char filename[], const char graphname[], const char tit
     FILE *gp;
 
     /** Gnuplot 初期設定 **/
-    const float x_max = t / 10;
+    const float x_max = t;
     const float x_min = 0;
     const float y_max = 2.0;
     const float y_min = -2.0;
@@ -186,7 +186,7 @@ void Gnuplot_noise(const char filename[], const char graphname[], const char tit
     fprintf(gp, "set title '%s'\n", title);                                 // グラフタイトル
     fprintf(gp, "set xlabel '{/Times-Italic t} [s]' offset 0.0, 0.0\n");    // x軸のラベル
     fprintf(gp, "set ylabel '{/Times-Italic F(t)} [-]' offset 1.0, 0.0\n"); // y軸のラベル
-    fprintf(gp, "set xtics 0.01 offset 0.0, 0.0\n");                        // x軸の間隔
+    fprintf(gp, "set xtics 0.1 offset 0.0, 0.0\n");                         // x軸の間隔
     fprintf(gp, "set ytics 1.0 offset 0.0, 0.0\n");                         // y軸の間隔
 
     /** Gnuplot 書き出し **/

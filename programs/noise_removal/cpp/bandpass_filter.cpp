@@ -112,7 +112,7 @@ void Gnuplot_DFT(const char filename[], const char graphname[], const char title
     FILE *gp;
 
     /** Gnuplot 初期設定 **/
-    const float x_max = hz / 2.0;
+    const float x_max = 100;
     const float x_min = 0;
     const float y_max = 550;
     const float y_min = 0;

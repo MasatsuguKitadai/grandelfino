@@ -133,7 +133,7 @@ td {
     display: flex;
     flex-direction: column;
     justify-content: center;
-    margin: 0;
+    align-items: center;
 }
 
 .right {
@@ -153,10 +153,18 @@ td {
 }
 
 .graph {
-    margin: auto;
-    width: 90%;
+    margin: 0.2rem;
+    width: 95%;
     height: auto;
-    padding: 0.5rem;
+}
+
+.caption {
+    width: auto;
+    height: auto;
+    text-align: center;
+    font-size: 0.8rem;
+    margin: 0.5rem 0;
+    padding: 0;
 }
 
 .comment {

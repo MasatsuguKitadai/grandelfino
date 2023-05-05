@@ -73,31 +73,31 @@ int main()
 void DFT(const char readfile[], const char writefile[])
 {
     vector<float> t;
-    vector<float> value;
+    vector<float> f;
     vector<float> re;
     vector<float> im;
     vector<float> spectrum;
 
     /** ファイルの読み込み **/
-    float t_tmp, value_tmp;
+    float t_tmp, f_tmp;
     fp = fopen(readfile, "r");
-    while ((fscanf(fp, "%f\t%f", &t_tmp, &value_tmp)) != EOF)
+    while ((fscanf(fp, "%f\t%f", &t_tmp, &f_tmp)) != EOF)
     {
         t.push_back(t_tmp);
-        value.push_back(value_tmp);
+        f.push_back(f_tmp);
     }
     fclose(fp);
 
     /** 実数部分と虚数部分に分けてフーリエ変換 **/
-    int n = value.size();
-    for (int i = 0; i < value.size(); i++)
+    int n = f.size();
+    for (int i = 0; i < f.size(); i++)
     {
         float re_tmp = 0;
         float im_tmp = 0;
-        for (int j = 0; j < value.size(); j++)
+        for (int j = 0; j < f.size(); j++)
         {
-            re_tmp += value[j] * cos(2.0 * pi * j * i / n);
-            im_tmp += -value[j] * sin(2.0 * pi * j * i / n);
+            re_tmp += f[j] * cos(2.0 * pi * j * i / n);
+            im_tmp += -f[j] * sin(2.0 * pi * j * i / n);
         }
         float spectrum_tmp = sqrt(re_tmp * re_tmp + im_tmp * im_tmp);
         re.push_back(re_tmp);
@@ -107,7 +107,7 @@ void DFT(const char readfile[], const char writefile[])
 
     /** データの書き出し **/
     fp = fopen(writefile, "w");
-    for (int i = 0; i < value.size(); i++)
+    for (int i = 0; i < f.size(); i++)
     {
         fprintf(fp, "%f\t%f\t%f\t%f\n", (float)i, spectrum[i], re[i], im[i]);
     }
@@ -123,7 +123,7 @@ void Gnuplot_DFT(const char filename[], const char graphname[], const char title
     FILE *gp;
 
     /** Gnuplot 初期設定 **/
-    const float x_max = hz / 2.0;
+    const float x_max = 100;
     const float x_min = 0;
     const float y_max = 550;
     const float y_min = 0;

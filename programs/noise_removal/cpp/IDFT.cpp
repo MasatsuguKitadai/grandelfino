@@ -25,7 +25,7 @@ const int hz = 1000; // サンプリング周波数 [Hz]
 
 /** プロトタイプ宣言 **/
 void IDFT(const char readfile[], const char writefile[]);
-void Gnuplot_DFT(const char filename[], const char graphname[], const char title[]);
+void Gnuplot_DFT(const char filename[], const char filename_2[], const char graphname[], const char title[]);
 
 /**************************************************************/
 // Function name : main
@@ -42,20 +42,22 @@ int main()
     mkdir(dir_2, dir_mode);
 
     /** 基本データのDFT **/
-    const char readfile_1[] = "DFT/data/basic_data.dat";
+    const char readfile_1[] = "Bandpass/data/basic_data.dat";
     const char writefile_1[] = "IDFT/data/basic_data.dat";
+    const char basefile_1[] = "Simulation/data/basic_data.dat";
     const char graphfile_1[] = "IDFT/graph/basic_data.svg";
     const char graphtitle_1[] = "IDFT : Basic data";
-    DFT(readfile_1, writefile_1);
-    Gnuplot_DFT(writefile_1, graphfile_1, graphtitle_1);
+    IDFT(readfile_1, writefile_1);
+    Gnuplot_DFT(writefile_1, basefile_1, graphfile_1, graphtitle_1);
 
     /** ノイズデータのDFT **/
-    const char readfile_2[] = "DFT/data/noise_data.dat";
+    const char readfile_2[] = "Bandpass/data/noise_data.dat";
     const char writefile_2[] = "IDFT/data/noise_data.dat";
+    const char basefile_2[] = "Simulation/data/noise_data.dat";
     const char graphfile_2[] = "IDFT/graph/noise_data.svg";
     const char graphtitle_2[] = "IDFT : Noise data";
-    DFT(readfile_2, writefile_2);
-    Gnuplot_DFT(writefile_2, graphfile_2, graphtitle_2);
+    IDFT(readfile_2, writefile_2);
+    Gnuplot_DFT(writefile_2, basefile_2, graphfile_2, graphtitle_2);
 
     return 0;
 }
@@ -71,10 +73,14 @@ void IDFT(const char readfile[], const char writefile[])
     vector<float> im;
     vector<float> spectrum;
 
+    vector<float> re2;
+    vector<float> im2;
+    vector<float> f;
+
     /** ファイルの読み込み **/
     float hz_tmp, spectrum_tmp, re_tmp, im_tmp;
     fp = fopen(readfile, "r");
-    while (fscanf(fp, "%f\t%f\t%f\t%f\n", (float)hz_tmp, spectrum_tmp, re_tmp, im_tmp) != EOF)
+    while (fscanf(fp, "%f\t%f\t%f\t%f\n", &hz_tmp, &spectrum_tmp, &re_tmp, &im_tmp) != EOF)
     {
         hz_dft.push_back(hz_tmp);
         spectrum.push_back(spectrum_tmp);
@@ -84,27 +90,30 @@ void IDFT(const char readfile[], const char writefile[])
     fclose(fp);
 
     /** 実数部分と虚数部分に分けてフーリエ変換 **/
-    int n = hz_dft.size();
-    for (int i = 0; i < hz_dft.size(); i++)
+    int n = spectrum.size();
+    for (int i = 0; i < spectrum.size(); i++)
     {
         re_tmp = 0;
         im_tmp = 0;
-        for (int j = 0; j < value.size(); j++)
+
+        for (int j = 0; j < spectrum.size(); j++)
         {
-            re_tmp += value[j] * cos(2.0 * pi * j * i / n);
-            im_tmp += value[j] * sin(2.0 * pi * j * i / n);
+            re_tmp += re[j] * cos(2.0 * pi * j * i / n) - im[j] * sin(2.0 * pi * j * i / n);
+            im_tmp += re[j] * sin(2.0 * pi * j * i / n) + im[j] * sin(2.0 * pi * j * i / n);
         }
+
         float spectrum_tmp = sqrt(re_tmp * re_tmp + im_tmp * im_tmp);
-        re.push_back(re_tmp);
-        re.push_back(im_tmp);
-        spectrum.push_back(spectrum_tmp);
+        f.push_back(re_tmp / n);
+        // re2.push_back(re_tmp);
+        // im2.push_back(im_tmp);
+        // spectrum.push_back(spectrum_tmp);
     }
 
     /** データの書き出し **/
     fp = fopen(writefile, "w");
-    for (int i = 0; i < value.size(); i++)
+    for (int i = 0; i < spectrum.size(); i++)
     {
-        fprintf(fp, "%d\t%f\n", i, spectrum[i]);
+        fprintf(fp, "%f\t%f\n", (float)(1.0 / hz) * i, f[i]);
     }
     fclose(fp);
 }
@@ -113,15 +122,15 @@ void IDFT(const char readfile[], const char writefile[])
 // Function name : Gnuplot_DFT
 // Description  :
 /**************************************************************/
-void Gnuplot_DFT(const char filename[], const char graphname[], const char title[])
+void Gnuplot_DFT(const char filename[], const char filename_2[], const char graphname[], const char title[])
 {
     FILE *gp;
 
     /** Gnuplot 初期設定 **/
-    const float x_max = hz / 2.0;
+    const float x_max = t;
     const float x_min = 0;
-    const float y_max = 550;
-    const float y_min = 0;
+    const float y_max = 2.0;
+    const float y_min = -2.0;
 
     /** Gnuplot 呼び出し **/
     if ((gp = popen("gnuplot", "w")) == NULL)
@@ -140,11 +149,11 @@ void Gnuplot_DFT(const char filename[], const char graphname[], const char title
     fprintf(gp, "set title '%s'\n", title);                                               // グラフタイトル
     fprintf(gp, "set xlabel '{/Times-Italic Frequency} [Hz]' offset 0.0, 0.0\n");         // x軸のラベル
     fprintf(gp, "set ylabel '{/Times-Italic Amplitude Spectrum} [-]' offset 1.0, 0.0\n"); // y軸のラベル
-    // fprintf(gp, "set xtics 0.1 offset 0.0, 0.0\n");                                       // x軸の間隔
-    // fprintf(gp, "set ytics 0.5 offset 0.0, 0.0\n");                                       // y軸の間隔
+    fprintf(gp, "set xtics 0.1 offset 0.0, 0.0\n");                                       // x軸の間隔
+    fprintf(gp, "set ytics 0.5 offset 0.0, 0.0\n");                                       // y軸の間隔
 
     /** Gnuplot 書き出し **/
-    fprintf(gp, "plot '%s' using 1:2 with lines lc 'black' notitle\n", filename);
+    fprintf(gp, "plot '%s' using 1:2 with lines lc 'grey' notitle, '%s' using 1:2 with lines lc 'red' notitle\n", filename_2, filename);
 
     /** Gnuplot 終了 **/
     fflush(gp);            // Clean up Data
