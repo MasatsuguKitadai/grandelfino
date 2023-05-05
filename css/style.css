@@ -141,14 +141,14 @@ td {
     align-items: center;
 }
 
-.right {
-    width: auto;
+.description {
+    width: 50%;
     max-width: 50%;
     margin-bottom: 20px;
 }
 
 .box {
-    margin: 2rem;
+    margin: 1.5rem;
     padding: 1rem;
     background-color: #D9E5FF;
 }
@@ -177,6 +177,14 @@ td {
     margin: 0;
     width: auto;
     text-align: center;
+}
+
+.author {
+    margin: 0;
+    padding-right: 20px;
+    width: auto;
+    font-size: small;
+    text-align: right;
 }
 
 #img_mpu6050 {
