@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>Macaroni Grattan</title>
+    <link rel="stylesheet" type="text/css" href="../css/style.css" />
+    <script type="text/javascript"
+        asyncsrc="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=MML_SVG"></script>
+</head>
+
+<body>
+    <header>
+        <h1><a href="home.html">Macaroni Grattan</a> |</h1>
+        <h1 class="sub_title">( Title )</h1>
+    </header>
+    <main>
+        <h2>タイトル</h2>
+        <p class="author">作成日時：2023/◯/△ 作成者：□□</p>
+        <div class="box">
+            <h5>【ポイント】</h5>
+            <p>・</p>
+            <p>・</p>
+        </div>
+        <h3>1. </h3>
+        <div class="topic">
+            <div class="left">
+                <img class="graph" src="../programs/noise_removal_with_FT/Simulation/graph/basic_data.svg"
+                    alt="sin_wave:basic">
+                <p class="caption">Fig.1 正弦波</p>
+            </div>
+            <div class="description">
+                <h4>正弦波（真値）</h4>
+                <p>今回は，規則正しい正弦波を使って<br>数値シミュレーションを行います</p>
+                <p>与える正弦波の周波数は 10 [Hz] です<br>覚えておいてください...</p>
+                <table>
+                    <tr>
+                        <td>正弦波の周波数</td>
+                        <td>10.00</td>
+                        <td>[Hz]</td>
+                    </tr>
+                    <tr>
+                        <td>最大振幅</td>
+                        <td>1.000</td>
+                        <td>[-]</td>
+                    </tr>
+                    <tr>
+                        <td>サンプリング周期</td>
+                        <td>1000</td>
+                        <td>[Hz]</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+        <div class="topic">
+            <div class="left">
+                <img class="graph" src="../programs/noise_removal_with_FT/Simulation/graph/noise_data.svg"
+                    alt="sin_wave:noisy">
+                <p class="caption">Fig.2 ノイズを含む正弦波</p>
+            </div>
+            <div class="description">
+                <h4>正弦波（ノイズあり）</h4>
+                <p>今回は，<a href="https://ja.wikipedia.org/wiki/%E6%AD%A3%E8%A6%8F%E5%88%86%E5%B8%83">正規分布</a>
+                    に従った<br>
+                    振れ幅 0.5 [-] のノイズを正弦波に与えてみます...</p>
+                <p>データはギザギザになりますね</p>
+                <p>今回は単純な正弦波なので，大まかにはわかりますが<br>
+                    もう少しはっきりさせたいところです...</p>
+                <p>しかし，一般的な計測データにはノイズがつきもの</p>
+                <p>どうにかして，使えるデータにならないでしょうか&#129300;</p>
+                <p>現在は，横軸に"時刻"を取っていますが...</p>
+            </div>
+        </div>
+        <h3>2. 周波数解析によるノイズ除去方法</h3>
+        <div class="topic">
+            <div class="left">
+                <img class="graph" src="../programs/noise_removal_with_FT/DFT/graph/basic_data.svg" alt="sin_wave:fft">
+                <p class="caption">Fig.3 もとの波形のフーリエ変換結果</p>
+                <img class="graph" src="../programs/noise_removal_with_FT/DFT/graph/noise_data.svg" alt="sin_wave:fft">
+                <p class="caption">Fig.4 ノイズを含む波形のフーリエ変換結果</p>
+            </div>
+            <div class="description">
+                <h4>フーリエ変換を使った周波数解析</h4>
+                <p>まず，成分を調べるために，<a
+                        href="https://ja.wikipedia.org/wiki/%E3%83%95%E3%83%BC%E3%83%AA%E3%82%A8%E5%A4%89%E6%8F%9B">フーリエ変換</a>
+                    によって<br>
+                    計測データを"時間軸"から"周波数軸"へと変換します</p>
+                <p>また，今回はデータ長の制限があると嫌なので<br>
+                    <a
+                        href="https://ja.wikipedia.org/wiki/%E9%9B%A2%E6%95%A3%E3%83%95%E3%83%BC%E3%83%AA%E3%82%A8%E5%A4%89%E6%8F%9B">
+                        離散フーリエ変換(DFT)</a> を使います&#129325;
+                </p>
+                <p> Fig.3 が "ノイズ無し" データのDFT結果<br>Fig.4 が "ノイズ有り" データのDFT結果です</p>
+                <p>どちらも，主成分として与えた 100 [Hz] の位置に<br>ピークが立っていることがわかります</p>
+                <p>一方で，"ノイズ有り" データには下部にギザギザ...<br>すなわちその他の周波数成分があるとわかります</p>
+                <p>これが不規則な周波数成分を持ったノイズの影響です</p>
+                <p>ということは，ギザギザ成分を取り除けばいいのでは...</p>
+                <p>ちなみに，DFTの進化系として<br>
+                    <a href="">高速フーリエ変換</a> なるものがあります&#129760;
+                </p>
+            </div>
+        </div>
+        <div class="topic">
+            <div class="left">
+                <img class="graph" src="../programs/noise_removal_with_FT/Bandpass/graph/noise_data.svg" alt="img">
+                <p class="caption">Fig.5 ノイズを含む波形に対するバンドパスフィルタの適用結果</p>
+            </div>
+            <div class="description">
+                <h4>バンドパスフィルタについて</h4>
+                <p>周波数解析と合わせて，<a
+                        href="https://ja.wikipedia.org/wiki/%E3%83%90%E3%83%B3%E3%83%89%E3%83%91%E3%82%B9%E3%83%95%E3%82%A3%E3%83%AB%E3%82%BF">バンドパスフィルタ</a>
+                    も<br>合わせて知っておくと便利です
+                </p>
+                <p>これは，特定の周波数域 (バンド) のみ通す (パスする)<br>
+                    ためのフィルタをいい，名前通りの意味です</p>
+                <p>3回の機械工学実験を受けた人にはおなじみですね&#128527;</p>
+                <p>ここでは，<a
+                        href="https://ja.wikipedia.org/wiki/%E3%83%8F%E3%82%A4%E3%83%91%E3%82%B9%E3%83%95%E3%82%A3%E3%83%AB%E3%82%BF">ハイパスフィルタ</a>
+                    として利用します</p>
+                <p>また，通す・通さないを決める値のことを <a
+                        href="https://ja.wikipedia.org/wiki/%E3%81%97%E3%81%8D%E3%81%84%E5%80%A4">しきい値</a> と<br>
+                    いいますが，今回は 50 [-] に設定すれば良さそうです</p>
+                <p>すなわち，振幅スペクトルの値 (DFTグラフ縦軸) が<br>
+                    50 [-] 以上なら通し，それ未満は通さないようにします</p>
+                <p>フィルタをかけると左図のように<br>
+                    下部のノイズ成分を除去することができました</p>
+            </div>
+        </div>
+        <div class="topic">
+            <div class="left">
+                <img class="graph" src="../programs/noise_removal_with_FT/Simulation/graph/basic_data.svg"
+                    alt="sin_wave:basic">
+                <p class="caption">Fig.6 正弦波 (再録)</p>
+                <img class="graph" src="../programs/noise_removal_with_FT/IDFT/graph/noise_data.svg" alt="sin_wave:ma">
+                <p class="caption">Fig.7 ノイズを含む波形の逆フーリエ変換結果</p>
+            </div>
+            <div class="description">
+                <h4>逆フーリエ変換による時間領域への変換</h4>
+                <p>フーリエ変換によって周波数解析を行ったデータに<br>
+                    バンドパスフィルタを適用して不要なノイズ成分を<br>
+                    除去しました</p>
+                <p>次はこのデータを周波数領域から時間領域へと<br>
+                    変換しなければいけません</p>
+                <p>そこで，逆フーリエ変換 によってもとの波形へと<br>戻してあげます</p>
+                <p>詳しい説明は割愛しますが<br>適用した結果は Fig.7 のようになります</p>
+                <p>灰色線が "ノイズ処理前のデータ"<br>
+                    赤色線が "ノイズ処理後のデータ" です</p>
+                <p>結果を見ると，ノイズをきれいに除去することができて<br>
+                    10 [Hz] の正弦波を取り出せたことがわかりますね!!</p>
+                <p>加速度センサーやダウンフォースの測定時など，<br>
+                    ロードノイズの乗る計測データの解析時に有効です
+                </p>
+            </div>
+        </div>
+        <h3>3. その他のデータ処理方法 (参考)</h3>
+        <div class="topic">
+            <div class="description">
+                <h4>カルマンフィルタによるノイズ処理</h4>
+                <p>いつか作りたい...</p>
+            </div>
+            <div class="description">
+                <h4>移動平均によるデータの平滑化</h4>
+                <p>他にもデータを滑らかにする方法として<br>
+                    <a href="https://ja.wikipedia.org/wiki/%E7%A7%BB%E5%8B%95%E5%B9%B3%E5%9D%87">移動平均移動平均 (Moving
+                        Average)</a> <br>という方法もあります (ノイズ処理とは若干異なる?)<br>
+                    しかし，めんどくさいのでここでは割愛します
+                </p>
+                <p>時間があれば追記するかも...</p>
+            </div>
+        </div>
+    </main>
+    <footer>
+        <h6> Macaroni Grattan / Grattan Unofficial WEB Site | &copy; 2023 Grandelfino</h6>
+    </footer>
+</body>
+
+</html>
