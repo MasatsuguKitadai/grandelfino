@@ -89,7 +89,7 @@ void DFT(const char readfile[], const char writefile[])
     fclose(fp);
 
     /** 実数部分と虚数部分に分けてフーリエ変換 **/
-    int n = f.size();
+    const int n = f.size();
     for (int i = 0; i < f.size(); i++)
     {
         float re_tmp = 0;

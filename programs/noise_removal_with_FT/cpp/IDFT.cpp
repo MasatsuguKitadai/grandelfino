@@ -102,7 +102,6 @@ void IDFT(const char readfile[], const char writefile[])
             im_tmp += re[j] * sin(2.0 * pi * j * i / n) + im[j] * sin(2.0 * pi * j * i / n);
         }
 
-        float spectrum_tmp = sqrt(re_tmp * re_tmp + im_tmp * im_tmp);
         f.push_back(re_tmp / n);
         // re2.push_back(re_tmp);
         // im2.push_back(im_tmp);
