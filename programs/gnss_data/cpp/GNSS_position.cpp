@@ -10,6 +10,7 @@
 #include <math.h>
 #include <sys/stat.h>
 #include <vector>
+#include <algorithm>
 using namespace std;
 FILE *fp;
 mode_t dir_mode = S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IWGRP | S_IXGRP | S_IROTH | S_IXOTH | S_IXOTH;
@@ -19,11 +20,12 @@ const float hz_gps = 1.0;       // サンプリング周期 [Hz]
 const float pi = 4 * atan(1.0); // 円周率 [rad]
 
 /** 変数宣言 **/
-vector<float> x;         // x方向位置 [m]
-vector<float> y;         // y方向位置 [m]
-vector<float> longitude; // 経度情報 [m]
-vector<float> latitude;  // 緯度情報 [m]
-const char program_name[] = "GNSS position";
+vector<float> x;   // x方向位置 [m]
+vector<float> y;   // y方向位置 [m]
+vector<float> lng; // 経度情報 [-]
+vector<float> lat; // 緯度情報 [-]
+
+const char program_name[] = "GNSS position"; // プログラム名
 
 /** プロトタイプ宣言 **/
 int Estimate_position();
@@ -43,22 +45,42 @@ int main()
     const char dir_1[] = "GNSS_position/position";
     const char dir_2[] = "GNSS_position/route";
     const char dir_3[] = "GNSS_position/graph";
+    const char dir_4[] = "GNSS_position/area";
 
     mkdir(dir_0, dir_mode);
     mkdir(dir_1, dir_mode);
     mkdir(dir_2, dir_mode);
     mkdir(dir_3, dir_mode);
+    mkdir(dir_4, dir_mode);
 
+    /* データの読み込み */
     int data_length = Estimate_position();
-    int progress_counter = 0;
+
+    /* 最大＆最小値の取得 */
+    const float lat_start = lat[0];                             // 緯度の最大値 [-]
+    const float lng_start = lng[0];                             // 経度の最小値 [-]
+    const float lat_max = *max_element(lat.begin(), lat.end()); // 緯度の最大値 [-]
+    const float lat_min = *min_element(lat.begin(), lat.end()); // 緯度の最小値 [-]
+    const float lng_max = *max_element(lng.begin(), lng.end()); // 経度の最大値 [-]
+    const float lng_min = *min_element(lng.begin(), lng.end()); // 経度の最小値 [-]
+
+    // 書き出し
+    const char area[] = "GNSS_position/area/area.dat";
+    fp = fopen(area, "w");
+    fprintf(fp, "%lf,%lf\n", lat_start, lng_start);
+    fprintf(fp, "%lf,%lf\n", lat_min, lng_min);
+    fprintf(fp, "%lf,%lf\n", lat_max, lng_max);
+    fclose(fp);
+
+    int progress_counter = 0; // 進捗表示用
 
     for (int i = 0; i < data_length; i++)
     {
         /* 進捗表示 */
         progress_counter = Progress_meter(program_name, i, data_length - 1, progress_counter);
 
-        Distance(latitude[0], longitude[0], latitude[i], longitude[i], i);
-        // printf("(x,y) = (%.3f,\t%.3f)\n", x[i], y[i]);
+        /* 平面座標系上の変位量計算 */
+        Distance(lat[0], lng[0], lat[i], lng[i], i);
 
         Write_data(i);
         if (i % 10 == 0)
@@ -96,8 +118,8 @@ int Estimate_position()
     {
         data_length += 1;
         // printf("%.0f\t%f\t%f\n", tmp[0], tmp[1], tmp[2]);
-        latitude.push_back(tmp[1]);
-        longitude.push_back(tmp[2]);
+        lat.push_back(tmp[1]);
+        lng.push_back(tmp[2]);
     }
     fclose(fp);
 
@@ -124,15 +146,24 @@ void Distance(float lat1, float lng1, float lat2, float lng2, int n)
 
     // 2点の中心角(rad)を求める
     double a_ns = sin(rlat1) * sin(rlat2) + cos(rlat1) * cos(rlat2) * cos(rlng1 - rlng1);
+<<<<<<< HEAD
     double rr_ns = acos(a_ns);
     double a_ew = sin(rlat1) * sin(rlat1) + cos(rlat1) * cos(rlat1) * cos(rlng1 - rlng2);
+=======
+    double a_ew = sin(rlat1) * sin(rlat1) + cos(rlat1) * cos(rlat1) * cos(rlng1 - rlng2);
+    double rr_ns = acos(a_ns);
+>>>>>>> 34f6665f67e46b99a1bbcf5c1d377173d0ca340a
     double rr_ew = acos(a_ew);
 
     // 地球赤道半径(m)
     const double earth_radius = 6378140;
 
     // 2点間の距離(km)
+<<<<<<< HEAD
     x[n] = earth_radius * rr_ew * -1.0;
+=======
+    x[n] = -1.0 * earth_radius * rr_ew;
+>>>>>>> 34f6665f67e46b99a1bbcf5c1d377173d0ca340a
     y[n] = earth_radius * rr_ns;
 }
 
@@ -172,10 +203,17 @@ void Gnuplot(int n)
 
     /** Gnuplot 初期設定 **/
     const float t = n / hz_gps;
+<<<<<<< HEAD
     const float x_max = 0;
     const float x_min = -5000;
     const float y_max = 3000;
     const float y_min = -2000;
+=======
+    const float x_max = 5000;
+    const float x_min = 0;
+    const float y_max = 4000;
+    const float y_min = -1000;
+>>>>>>> 34f6665f67e46b99a1bbcf5c1d377173d0ca340a
 
     /** Gnuplot ファイル名の設定 **/
     char graphname[100], filename_1[100], filename_2[100];
