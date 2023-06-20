@@ -123,16 +123,16 @@ void Distance(float lat1, float lng1, float lat2, float lng2, int n)
     const double rlng2 = lng2 * pi / 180; // 移動後の位置 [rad]
 
     // 2点の中心角(rad)を求める
-    double a_ew = sin(rlat1) * sin(rlat2) + cos(rlat1) * cos(rlat2) * cos(rlng1 - rlng1);
-    double a_ns = sin(rlat1) * sin(rlat1) + cos(rlat1) * cos(rlat1) * cos(rlng1 - rlng2);
-    double rr_ew = acos(a_ew);
+    double a_ns = sin(rlat1) * sin(rlat2) + cos(rlat1) * cos(rlat2) * cos(rlng1 - rlng1);
     double rr_ns = acos(a_ns);
+    double a_ew = sin(rlat1) * sin(rlat1) + cos(rlat1) * cos(rlat1) * cos(rlng1 - rlng2);
+    double rr_ew = acos(a_ew);
 
     // 地球赤道半径(m)
     const double earth_radius = 6378140;
 
     // 2点間の距離(km)
-    x[n] = earth_radius * rr_ew;
+    x[n] = earth_radius * rr_ew * -1.0;
     y[n] = earth_radius * rr_ns;
 }
 
@@ -172,10 +172,10 @@ void Gnuplot(int n)
 
     /** Gnuplot 初期設定 **/
     const float t = n / hz_gps;
-    const float x_max = 4000;
-    const float x_min = -1000;
-    const float y_max = 5000;
-    const float y_min = 0;
+    const float x_max = 0;
+    const float x_min = -5000;
+    const float y_max = 3000;
+    const float y_min = -2000;
 
     /** Gnuplot ファイル名の設定 **/
     char graphname[100], filename_1[100], filename_2[100];
@@ -191,20 +191,20 @@ void Gnuplot(int n)
     }
 
     /** Gnuplot 描画設定 **/
-    fprintf(gp, "set terminal png size 800, 600 font 'Times New Roman, 16'\n");
+    fprintf(gp, "set terminal png size 600, 600 font 'Times New Roman, 16'\n");
     fprintf(gp, "set size ratio -1\n");
-    fprintf(gp, "set output '%s'\n", graphname);                                   // 出力ファイル
-    fprintf(gp, "unset key\n");                                                    // 凡例非表示
-    fprintf(gp, "set xrange [%.3f:%.3f]\n", x_min, x_max);                         // x軸の描画範囲
-    fprintf(gp, "set yrange [%.3f:%.3f]\n", y_min, y_max);                         // y軸の描画範囲
-    fprintf(gp, "set title 'GNSS Position : {/Times-Italic t} = %1.3f [s]'\n", t); // グラフタイトル
-    fprintf(gp, "set xlabel '{/Times-Italic x} [m]' offset 0.0, 0.0\n");           // x軸のラベル
-    fprintf(gp, "set ylabel '{/Times-Italic y} [m]' offset 1.0, 0.0\n");           // y軸のラベル
-    fprintf(gp, "set xtics 1000.0 offset 0.0, 0.0\n");                             // x軸の間隔
-    fprintf(gp, "set ytics 1000.0 offset 0.0, 0.0\n");                             // y軸の間隔
+    fprintf(gp, "set output '%s'\n", graphname);                                    // 出力ファイル
+    fprintf(gp, "unset key\n");                                                     // 凡例非表示
+    fprintf(gp, "set xrange [%.3f:%.3f]\n", x_min, x_max);                          // x軸の描画範囲
+    fprintf(gp, "set yrange [%.3f:%.3f]\n", y_min, y_max);                          // y軸の描画範囲
+    fprintf(gp, "set title 'GNSS Position : {/Times-Italic t} = %01.3f [s]'\n", t); // グラフタイトル
+    fprintf(gp, "set xlabel '{/Times-Italic x} [m]' offset 0.0, 0.0\n");            // x軸のラベル
+    fprintf(gp, "set ylabel '{/Times-Italic y} [m]' offset 1.0, 0.0\n");            // y軸のラベル
+    fprintf(gp, "set xtics 1000.0 offset 0.0, 0.0\n");                              // x軸の間隔
+    fprintf(gp, "set ytics 1000.0 offset 0.0, 0.0\n");                              // y軸の間隔
 
     /** Gnuplot 書き出し **/
-    fprintf(gp, "plot '%s' using 2:3 with lines lc 'grey50' notitle, '%s' using 2:3 with points lc 'red' ps 1.5 pt 7 notitle\n", filename_2, filename_1);
+    fprintf(gp, "plot '%s' using 2:3 with lines lc 'grey50' notitle, '%s' using 2:3 with points lc 'black' ps 1.5 pt 7 notitle\n", filename_2, filename_1);
 
     /** Gnuplot 終了 **/
     fflush(gp);            // Clean up Data
