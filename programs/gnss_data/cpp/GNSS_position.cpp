@@ -146,24 +146,15 @@ void Distance(float lat1, float lng1, float lat2, float lng2, int n)
 
     // 2点の中心角(rad)を求める
     double a_ns = sin(rlat1) * sin(rlat2) + cos(rlat1) * cos(rlat2) * cos(rlng1 - rlng1);
-<<<<<<< HEAD
     double rr_ns = acos(a_ns);
     double a_ew = sin(rlat1) * sin(rlat1) + cos(rlat1) * cos(rlat1) * cos(rlng1 - rlng2);
-=======
-    double a_ew = sin(rlat1) * sin(rlat1) + cos(rlat1) * cos(rlat1) * cos(rlng1 - rlng2);
-    double rr_ns = acos(a_ns);
->>>>>>> 34f6665f67e46b99a1bbcf5c1d377173d0ca340a
     double rr_ew = acos(a_ew);
 
     // 地球赤道半径(m)
     const double earth_radius = 6378140;
 
     // 2点間の距離(km)
-<<<<<<< HEAD
     x[n] = earth_radius * rr_ew * -1.0;
-=======
-    x[n] = -1.0 * earth_radius * rr_ew;
->>>>>>> 34f6665f67e46b99a1bbcf5c1d377173d0ca340a
     y[n] = earth_radius * rr_ns;
 }
 
@@ -203,17 +194,10 @@ void Gnuplot(int n)
 
     /** Gnuplot 初期設定 **/
     const float t = n / hz_gps;
-<<<<<<< HEAD
     const float x_max = 0;
     const float x_min = -5000;
     const float y_max = 3000;
     const float y_min = -2000;
-=======
-    const float x_max = 5000;
-    const float x_min = 0;
-    const float y_max = 4000;
-    const float y_min = -1000;
->>>>>>> 34f6665f67e46b99a1bbcf5c1d377173d0ca340a
 
     /** Gnuplot ファイル名の設定 **/
     char graphname[100], filename_1[100], filename_2[100];
