@@ -22,6 +22,9 @@ const float pi = 4 * atan(1.0); // 円周率 [rad]
 /** 変数宣言 **/
 vector<float> x;   // x方向位置 [m]
 vector<float> y;   // y方向位置 [m]
+vector<float> vx;  // x方向速度 [m/s]
+vector<float> vy;  // y方向速度 [m/s]
+vector<float> v;   // 合計速度 [m/s]
 vector<float> lng; // 経度情報 [-]
 vector<float> lat; // 緯度情報 [-]
 
@@ -30,6 +33,7 @@ const char program_name[] = "GNSS position"; // プログラム名
 /** プロトタイプ宣言 **/
 int Estimate_position();
 void Distance(float lat1, float lng1, float lat2, float lng2, int n);
+void Velocity(int n, int max);
 void Write_data(int num);
 void Gnuplot(int n);
 int Progress_meter(const char program_name[], int i, int max, int progress_count);
@@ -56,6 +60,13 @@ int main()
     /* データの読み込み */
     int data_length = Estimate_position();
 
+    /** 配列のサイズ変更 **/
+    x.resize(data_length);
+    y.resize(data_length);
+    vx.resize(data_length);
+    vy.resize(data_length);
+    v.resize(data_length);
+
     /* 最大＆最小値の取得 */
     const float lat_start = lat[0];                             // 緯度の最大値 [-]
     const float lng_start = lng[0];                             // 経度の最小値 [-]
@@ -74,13 +85,21 @@ int main()
 
     int progress_counter = 0; // 進捗表示用
 
+    /* 平面座標系上の変位量計算 */
+    for (int i = 0; i < data_length; i++)
+    {
+        Distance(lat[0], lng[0], lat[i], lng[i], i);
+    }
+
+    for (int i = 0; i < data_length; i++)
+    {
+        Velocity(i, data_length);
+    }
+
     for (int i = 0; i < data_length; i++)
     {
         /* 進捗表示 */
         progress_counter = Progress_meter(program_name, i, data_length - 1, progress_counter);
-
-        /* 平面座標系上の変位量計算 */
-        Distance(lat[0], lng[0], lat[i], lng[i], i);
 
         Write_data(i);
         if (i % 10 == 0)
@@ -123,10 +142,6 @@ int Estimate_position()
     }
     fclose(fp);
 
-    /** 配列のサイズ変更 **/
-    x.resize(data_length);
-    y.resize(data_length);
-
     /** 位置の積算 **/
 
     return data_length;
@@ -159,6 +174,18 @@ void Distance(float lat1, float lng1, float lat2, float lng2, int n)
 }
 
 /**************************************************************/
+// Function name : Speed
+// Description   : 速度計算
+/**************************************************************/
+void Velocity(int n, int max)
+{
+    // 各方向からの速度
+    vx[n] = (x[n + 1] - x[n]) / hz_gps * 3600 / 1000; // x方向速度 [km/h]
+    vy[n] = (y[n + 1] - y[n]) / hz_gps * 3600 / 1000; // y方向速度 [km/h]
+    v[n] = sqrt(vx[n] * vx[n] + vy[n] * vy[n]);
+}
+
+/**************************************************************/
 // Function name : Write_data
 // Description   : 車両の位置を計算
 /**************************************************************/
@@ -176,10 +203,10 @@ void Write_data(int n)
     /** 走行経路の書き出し **/
     sprintf(filename, "GNSS_position/route/%d.dat", n);
     fp = fopen(filename, "w");
-    for (int i = 0; i <= n; i++)
+    for (int i = 0; i < n; i++)
     {
         float t_tmp = i / hz_gps;
-        fprintf(fp, "%f\t%f\t%f\n", t_tmp, x[i], y[i]);
+        fprintf(fp, "%f\t%f\t%f\t%f\t%f\t%f\n", t_tmp, x[i], y[i], vx[i], vy[i], v[i]);
     }
     fclose(fp);
 }
