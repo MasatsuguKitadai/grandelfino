@@ -91,7 +91,8 @@ int main()
         Distance(lat[0], lng[0], lat[i], lng[i], i);
     }
 
-    for (int i = 0; i < data_length; i++)
+    /* 速度の計算 */
+    for (int i = 0; i < data_length - 1; i++)
     {
         Velocity(i, data_length);
     }
@@ -100,7 +101,6 @@ int main()
     {
         /* 進捗表示 */
         progress_counter = Progress_meter(program_name, i, data_length - 1, progress_counter);
-
         Write_data(i);
         if (i % 10 == 0)
         {
@@ -135,10 +135,10 @@ int Estimate_position()
     // 読み込み
     while ((fscanf(fp, "%f,%[^,],%f,%f,%f,%f,%f", &tmp[0], str, &tmp[1], &tmp[2], &tmp[3], &tmp[4], &tmp[5])) != EOF)
     {
-        data_length += 1;
         // printf("%.0f\t%f\t%f\n", tmp[0], tmp[1], tmp[2]);
         lat.push_back(tmp[1]);
         lng.push_back(tmp[2]);
+        data_length += 1;
     }
     fclose(fp);
 
@@ -197,16 +197,16 @@ void Write_data(int n)
     char filename[100];
     sprintf(filename, "GNSS_position/position/%d.dat", n);
     fp = fopen(filename, "w");
-    fprintf(fp, "%f\t%f\t%f\n", t, x[n], y[n]);
+    fprintf(fp, "%f\t%f\t%f\t%f\t%f\t%f\n", t, x[n], y[n], vx[n], vy[n], v[n]);
     fclose(fp);
 
     /** 走行経路の書き出し **/
     sprintf(filename, "GNSS_position/route/%d.dat", n);
     fp = fopen(filename, "w");
-    for (int i = 0; i < n; i++)
+    for (int i = 0; i <= n; i++)
     {
         float t_tmp = i / hz_gps;
-        fprintf(fp, "%f\t%f\t%f\t%f\t%f\t%f\n", t_tmp, x[i], y[i], vx[i], vy[i], v[i]);
+        fprintf(fp, "%f\t%f\t%f\n", t_tmp, x[i], y[i]);
     }
     fclose(fp);
 }
@@ -223,8 +223,8 @@ void Gnuplot(int n)
     const float t = n / hz_gps;
     const float x_max = 0;
     const float x_min = -5000;
-    const float y_max = 3000;
-    const float y_min = -2000;
+    const float y_max = 4000;
+    const float y_min = -1000;
 
     /** Gnuplot ファイル名の設定 **/
     char graphname[100], filename_1[100], filename_2[100];
