@@ -191,6 +191,8 @@ td {
     text-align: right;
 }
 
+/* 画像サイズの設定 */
+
 #img_mpu6050 {
     margin: auto;
     padding: 0.5rem;
@@ -207,4 +209,10 @@ td {
     margin: auto;
     padding: 0.5rem;
     width: 70%;
+}
+
+#img_route {
+    margin: auto;
+    padding: 0.5rem;
+    width: 90%;
 }

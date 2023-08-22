@@ -60,13 +60,6 @@ int main()
     /* データの読み込み */
     int data_length = Estimate_position();
 
-    /** 配列のサイズ変更 **/
-    x.resize(data_length);
-    y.resize(data_length);
-    vx.resize(data_length);
-    vy.resize(data_length);
-    v.resize(data_length);
-
     /* 最大＆最小値の取得 */
     const float lat_start = lat[0];                             // 緯度の最大値 [-]
     const float lng_start = lng[0];                             // 経度の最小値 [-]
@@ -86,21 +79,21 @@ int main()
     int progress_counter = 0; // 進捗表示用
 
     /* 平面座標系上の変位量計算 */
-    for (int i = 0; i < data_length; i++)
+    for (int i = 0; i < lat.size(); i++)
     {
         Distance(lat[0], lng[0], lat[i], lng[i], i);
     }
 
     /* 速度の計算 */
-    for (int i = 0; i < data_length - 1; i++)
-    {
-        Velocity(i, data_length);
-    }
+    // for (int i = 0; i < lat.size() - 1; i++)
+    // {
+    //     Velocity(i, data_length);
+    // }
 
-    for (int i = 0; i < data_length; i++)
+    for (int i = 0; i < lat.size(); i++)
     {
         /* 進捗表示 */
-        progress_counter = Progress_meter(program_name, i, data_length - 1, progress_counter);
+        progress_counter = Progress_meter(program_name, i, lat.size() - 1, progress_counter);
         Write_data(i);
         if (i % 10 == 0)
         {
@@ -159,18 +152,18 @@ void Distance(float lat1, float lng1, float lat2, float lng2, int n)
     const double rlat2 = lat2 * pi / 180; // 移動後の位置 [rad]
     const double rlng2 = lng2 * pi / 180; // 移動後の位置 [rad]
 
-    // 2点の中心角(rad)を求める
-    double a_ns = sin(rlat1) * sin(rlat2) + cos(rlat1) * cos(rlat2) * cos(rlng1 - rlng1);
-    double rr_ns = acos(a_ns);
-    double a_ew = sin(rlat1) * sin(rlat1) + cos(rlat1) * cos(rlat1) * cos(rlng1 - rlng2);
-    double rr_ew = acos(a_ew);
-
-    // 地球赤道半径(m)
+    // 地球赤道半径 [m]
     const double earth_radius = 6378140;
 
+    // 地球上での位置の計算 [m]
+    const double earth_x0 = earth_radius * rlng1; // 基準点 (南北方向)
+    const double earth_y0 = earth_radius * rlat1; // 基準点 (東西方向)
+    const double earth_x1 = earth_radius * rlng2; // 基準点 (南北方向)
+    const double earth_y1 = earth_radius * rlat2; // 基準点 (東西方向)
+
     // 2点間の距離(km)
-    x[n] = earth_radius * rr_ew * -1.0;
-    y[n] = earth_radius * rr_ns;
+    x.push_back(earth_x1 - earth_x0);
+    y.push_back(earth_y1 - earth_y0);
 }
 
 /**************************************************************/
@@ -197,7 +190,8 @@ void Write_data(int n)
     char filename[100];
     sprintf(filename, "GNSS_position/position/%d.dat", n);
     fp = fopen(filename, "w");
-    fprintf(fp, "%f\t%f\t%f\t%f\t%f\t%f\n", t, x[n], y[n], vx[n], vy[n], v[n]);
+    // fprintf(fp, "%f\t%f\t%f\t%f\t%f\t%f\n", t, x[n], y[n], vx[n], vy[n], v[n]);
+    fprintf(fp, "%f\t%f\t%f\n", t, x[n], y[n]);
     fclose(fp);
 
     /** 走行経路の書き出し **/
@@ -240,20 +234,20 @@ void Gnuplot(int n)
     }
 
     /** Gnuplot 描画設定 **/
-    fprintf(gp, "set terminal png size 600, 600 font 'Times New Roman, 16'\n");
+    fprintf(gp, "set terminal png size 600, 600 font 'Times New Roman, 20'\n");
     fprintf(gp, "set size ratio -1\n");
-    fprintf(gp, "set output '%s'\n", graphname);                                    // 出力ファイル
-    fprintf(gp, "unset key\n");                                                     // 凡例非表示
-    fprintf(gp, "set xrange [%.3f:%.3f]\n", x_min, x_max);                          // x軸の描画範囲
-    fprintf(gp, "set yrange [%.3f:%.3f]\n", y_min, y_max);                          // y軸の描画範囲
-    fprintf(gp, "set title 'GNSS Position : {/Times-Italic t} = %01.3f [s]'\n", t); // グラフタイトル
-    fprintf(gp, "set xlabel '{/Times-Italic x} [m]' offset 0.0, 0.0\n");            // x軸のラベル
-    fprintf(gp, "set ylabel '{/Times-Italic y} [m]' offset 1.0, 0.0\n");            // y軸のラベル
-    fprintf(gp, "set xtics 1000.0 offset 0.0, 0.0\n");                              // x軸の間隔
-    fprintf(gp, "set ytics 1000.0 offset 0.0, 0.0\n");                              // y軸の間隔
+    fprintf(gp, "set output '%s'\n", graphname);                                                 // 出力ファイル
+    fprintf(gp, "unset key\n");                                                                  // 凡例非表示
+    fprintf(gp, "set xrange [%.3f:%.3f]\n", x_min, x_max);                                       // x軸の描画範囲
+    fprintf(gp, "set yrange [%.3f:%.3f]\n", y_min, y_max);                                       // y軸の描画範囲
+    fprintf(gp, "set title 'GNSS Position : {/Times-Italic t} = %01.3f [s]'\n", t);              // グラフタイトル
+    fprintf(gp, "set xlabel 'East-West direction : {/Times-Italic x} [m]' offset 0.0, 0.0\n");   // x軸のラベル
+    fprintf(gp, "set ylabel 'North-South direction : {/Times-Italic y} [m]' offset 1.0, 0.0\n"); // y軸のラベル
+    fprintf(gp, "set xtics 1000.0 offset 0.0, 0.0\n");                                           // x軸の間隔
+    fprintf(gp, "set ytics 1000.0 offset 0.0, 0.0\n");                                           // y軸の間隔
 
     /** Gnuplot 書き出し **/
-    fprintf(gp, "plot '%s' using 2:3 with lines lc 'grey50' notitle, '%s' using 2:3 with points lc 'black' ps 1.5 pt 7 notitle\n", filename_2, filename_1);
+    fprintf(gp, "plot '%s' using 2:3 with lines lw 2 lc 'grey50' notitle, '%s' using 2:3 with points lc 'black' ps 2.0 pt 7 notitle\n", filename_2, filename_1);
 
     /** Gnuplot 終了 **/
     fflush(gp);            // Clean up Data
