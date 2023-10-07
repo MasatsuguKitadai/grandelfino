@@ -2,117 +2,175 @@
 #include <SPI.h>
 #include <SD.h>
 
-const int chipSelect = 10; // SDカードモジュールのチップセレクトピン番号
-const float alpha = 0.85;
+#define a 0.85
 float rax, ray, raz, rgx, rgy, rgz;
+String filename = ""; // To store the generated filename
 
-void setup() {
-    Serial.begin(115200);
-    Serial.println("--- Started ---");
-    initializeSDCard();
-    initializeMPU6050();
-    String fileName = generateFileName();
-    createNewFile(fileName);
-}
+const int chipSelect = 4;
 
-void loop() {
-    int startTime = millis();
-    readMPU6050Data();
+unsigned long previousMillis = 0; // last time data was saved
+const long interval = 20;         // interval at which to save data (milliseconds)
 
-    static unsigned long previousTime = 0;
-    unsigned long currentTime = millis();
-
-    if (currentTime - previousTime >= 20) {  // 20ms sampling interval
-        writeToSD(generateFileName(), currentTime);
-        previousTime = currentTime;
+void setup()
+{
+    // Open serial communications and wait for port to open:
+    Serial.begin(9600);
+    while (!Serial)
+    {
+        ; // wait for serial port to connect. Needed for native USB port only
     }
 
-    delayToMaintainLoopFrequency(startTime, 20); // 20ms loop time
-}
-
-void initializeSDCard() {
-    if (!SD.begin(chipSelect)) {
-        Serial.println("Failed to initialize SD card!");
-        return;
+    // initialize the SD card
+    Serial.print("Initializing SD card...");
+    if (!SD.begin(chipSelect))
+    {
+        Serial.println("Card failed, or not present");
+        while (1)
+            ;
     }
-    Serial.println("SD card initialized successfully.");
-}
+    Serial.println("card initialized.");
 
-void initializeMPU6050() {
+    // initialize the MPU-6050
+    Serial.println("Initializing MPU6050...");
     Wire.begin();
     Wire.beginTransmission(0x68);
     Wire.write(0x6B);
     Wire.write(0x00);
     Wire.endTransmission();
     rax = ray = raz = rgx = rgy = rgz = 0;
+
+    generateFilename();
+    createFile(filename);
 }
 
-void readMPU6050Data() {
+void generateFilename()
+{
+    int fileNumber = 1; // To increment the filename
+    do
+    {
+        filename = String(fileNumber) + ".CSV";
+        fileNumber++;
+    } while (SD.exists(filename));
+}
+
+void createFile(String &filename)
+{
+    // ファイルを開く (存在しない場合は新規作成)
+    File newFile = SD.open(filename, FILE_WRITE | O_TRUNC | O_CREAT); // ファイルを新規書き込みモードで開く
+
+    // ファイルが正常に開かれたか確認
+    if (newFile)
+    {
+        Serial.print("File created successfully.\t");
+        Serial.println(filename);
+        newFile.close();
+    }
+    else
+    {
+        Serial.println("Error creating file.");
+    }
+}
+
+void loop()
+{
+    unsigned long currentMillis = millis();
+
+    // Read from MPU-6050...
     Wire.beginTransmission(0x68);
     Wire.write(0x3B);
     Wire.endTransmission(false);
     Wire.requestFrom(0x68, 14, true);
 
-    int16_t ax = Wire.read() << 8 | Wire.read();
-    int16_t ay = Wire.read() << 8 | Wire.read();
-    int16_t az = Wire.read() << 8 | Wire.read();
-    int16_t gx = Wire.read() << 8 | Wire.read();
-    int16_t gy = Wire.read() << 8 | Wire.read();
-    int16_t gz = Wire.read() << 8 | Wire.read();
+    int16_t ax, ay, az, gx, gy, gz;
+    ax = Wire.read() << 8 | Wire.read();
+    ay = Wire.read() << 8 | Wire.read();
+    az = Wire.read() << 8 | Wire.read();
+    Wire.read();
+    Wire.read(); // Skip temperature data
+    gx = Wire.read() << 8 | Wire.read();
+    gy = Wire.read() << 8 | Wire.read();
+    gz = Wire.read() << 8 | Wire.read();
 
-    rax = alpha * rax + (1-alpha) * ax / 16384.0;
-    ray = alpha * ray + (1-alpha) * ay / 16384.0;
-    raz = alpha * raz + (1-alpha) * az / 16384.0;
-    rgx = alpha * rgx + (1-alpha) * gx / 131.0;
-    rgy = alpha * rgy + (1-alpha) * gy / 131.0;
-    rgz = alpha * rgz + (1-alpha) * gz / 131.0;
-}
+    rax = a * rax + (1 - a) * ax / 16384.0;
+    ray = a * ray + (1 - a) * ay / 16384.0;
+    raz = a * raz + (1 - a) * az / 16384.0;
+    rgx = a * rgx + (1 - a) * gx / 131.0;
+    rgy = a * rgy + (1 - a) * gy / 131.0;
+    rgz = a * rgz + (1 - a) * gz / 131.0;
 
-String generateFileName() {
-    int fileNumber = 0;
-    while (true) {
-        char fileName[15]; // Enough to hold "DATA_XXXX.csv"
-        snprintf(fileName, sizeof(fileName), "DATA_%04d.csv", fileNumber);
-        if (!SD.exists(fileName)) {
-            return String(fileName);
+    // Save to SD card every 'interval' milliseconds
+    if (currentMillis - previousMillis >= interval)
+    {
+        previousMillis = currentMillis;
+
+        File dataFile = SD.open(filename, FILE_WRITE);
+        if (dataFile)
+        {
+            // Write to Serial monitor
+            Serial.print("successfully opened " + filename + "\t");
+            Serial.print(" time:");
+            Serial.print(previousMillis);
+            Serial.print(" rax:");
+            Serial.print(rax);
+            Serial.print(" ray:");
+            Serial.print(ray);
+            Serial.print(" raz:");
+            Serial.print(raz);
+            Serial.print(" rgx:");
+            Serial.print(rgx);
+            Serial.print(" rgy:");
+            Serial.print(rgy);
+            Serial.print(" rgz:");
+            Serial.println(rgz);
+
+            // Write to SD card
+            dataFile.print(previousMillis);
+            dataFile.print(",");
+            dataFile.print(rax);
+            dataFile.print(",");
+            dataFile.print(ray);
+            dataFile.print(",");
+            dataFile.print(raz);
+            dataFile.print(",");
+            dataFile.print(rgx);
+            dataFile.print(",");
+            dataFile.print(rgy);
+            dataFile.print(",");
+            dataFile.println(rgz);
+
+            dataFile.close();
         }
-        fileNumber++;
+        else
+        {
+            Serial.print("error opening " + filename + "\t");
+            Serial.print(" time:");
+            Serial.print(previousMillis);
+            Serial.print(" rax:");
+            Serial.print(rax);
+            Serial.print(" ray:");
+            Serial.print(ray);
+            Serial.print(" raz:");
+            Serial.print(raz);
+            Serial.print(" rgx:");
+            Serial.print(rgx);
+            Serial.print(" rgy:");
+            Serial.print(rgy);
+            Serial.print(" rgz:");
+            Serial.println(rgz);
+        }
     }
 }
 
-void createNewFile(String fileName) {
-    File Write_File = SD.open(fileName, FILE_WRITE | O_TRUNC | O_CREAT);
-    if (Write_File) {
-        Write_File.println("Time, rax, ray, raz, rgx, rgy, rgz");
-        Write_File.close();
-    } else {
-        Serial.println("ファイルの作成に失敗しました！");
-    }
-}
-
-void writeToSD(String fileName, unsigned long time) {
-    File WriteFile = SD.open(fileName, FILE_WRITE);
-    if (WriteFile) {
-        WriteFile.print(time);
-        WriteFile.print(",");
-        WriteFile.print(rax);
-        WriteFile.print(",");
-        WriteFile.print(ray);
-        WriteFile.print(",");
-        WriteFile.print(raz);
-        WriteFile.print(",");
-        WriteFile.print(rgx);
-        WriteFile.print(",");
-        WriteFile.print(rgy);
-        WriteFile.print(",");
-        WriteFile.println(rgz);
-        WriteFile.close();
-    }
-}
-
-void delayToMaintainLoopFrequency(int startTime, int desiredLoopTime) {
-    int elapsedTime = millis() - startTime;
-    if (elapsedTime < desiredLoopTime) {
-        delay(desiredLoopTime - elapsedTime);
-    }
-}
+dataFile.print(previousMillis);
+dataFile.print(",");
+dataFile.print(rax);
+dataFile.print(",");
+dataFile.print(ray);
+dataFile.print(",");
+dataFile.print(raz);
+dataFile.print(",");
+dataFile.print(rgx);
+dataFile.print(",");
+dataFile.print(rgy);
+dataFile.print(",");
+dataFile.println(rgz);
