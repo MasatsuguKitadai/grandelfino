@@ -8,3 +8,5 @@ programs/estimate_position/Estimate_position_IMU+GPS
 
 programs/gnss_data/GNSS_position
 programs/gnss_data/GNSS_position
+
+programs/acceleration/graph
